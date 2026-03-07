@@ -1,12 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, ArrowLeftRight, ListChecks } from "lucide-react";
+import { Search, ShoppingCart, ArrowLeftRight, ListChecks, LayoutGrid } from "lucide-react";
 import { useCart } from "@/lib/contexts/cart-context";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", icon: Search, label: "Search" },
+  { href: "/category", icon: LayoutGrid, label: "Browse" },
   { href: "/compare", icon: ArrowLeftRight, label: "Compare" },
   { href: "/staples", icon: ListChecks, label: "Staples" },
   { href: "/cart", icon: ShoppingCart, label: "Cart", showBadge: true },

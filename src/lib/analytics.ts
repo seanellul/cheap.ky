@@ -59,3 +59,16 @@ export function trackAppBannerDismiss() {
 export function trackAppRequest(platform: "ios" | "android") {
   capture("app_request", { platform });
 }
+
+// PWA
+export function trackPWAPromptShown(trigger: string) {
+  capture("pwa_prompt_shown", { trigger });
+}
+
+export function trackPWAInstall(platform: string) {
+  capture("pwa_install", { platform });
+}
+
+export function trackPWAPromptDismissed() {
+  capture("pwa_prompt_dismissed");
+}

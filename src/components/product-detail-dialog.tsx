@@ -15,6 +15,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { ProductImage } from "@/components/product-image";
 import { formatKYD } from "@/lib/utils/currency";
 import { track } from "@/lib/utils/track";
+import { trackProductView } from "@/lib/analytics";
 
 interface StoreMatch {
   storeProductId: number;
@@ -65,6 +66,7 @@ export function ProductDetailDialog({ productId, onClose, onAddToCart }: Product
       .then((d) => {
         setData(d);
         track("product_view", d?.product?.name ?? null, { productId });
+        trackProductView(productId, d?.product?.name ?? "");
       })
       .finally(() => setLoading(false));
   }, [productId]);

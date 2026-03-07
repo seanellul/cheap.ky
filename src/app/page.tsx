@@ -26,6 +26,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView } from "@/lib/analytics";
+import { track } from "@/lib/utils/track";
 
 interface SearchResult {
   id: number;
@@ -131,7 +132,10 @@ export default function HomePage() {
     setResults(r);
     setHasSearched(true);
     setResultKey((k) => k + 1);
-    if (query.length >= 2) trackSearch(query, r.length);
+    if (query.length >= 2) {
+      track("search", query, { resultCount: r.length });
+      trackSearch(query, r.length);
+    }
   }
 
   function handleBubbleSelect(term: string) {

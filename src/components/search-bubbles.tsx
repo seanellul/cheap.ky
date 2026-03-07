@@ -54,14 +54,14 @@ function sizeClass(weight: number): string {
 
 function colorClass(weight: number): string {
   if (weight >= 0.85)
-    return "bg-primary/10 text-primary border-primary/25 hover:bg-primary/20 hover:border-primary/40";
+    return "bg-primary/15 text-primary border-primary/30 hover:bg-primary/25 hover:border-primary/50 dark:bg-primary/20 dark:text-primary dark:border-primary/40";
   if (weight >= 0.7)
-    return "bg-primary/8 text-primary/90 border-primary/20 hover:bg-primary/15 hover:border-primary/35";
+    return "bg-primary/10 text-primary border-primary/25 hover:bg-primary/20 hover:border-primary/40 dark:bg-primary/15 dark:text-primary/90 dark:border-primary/35";
   if (weight >= 0.55)
-    return "bg-accent/8 text-accent-foreground border-accent/20 hover:bg-accent/15 hover:border-accent/35";
+    return "bg-secondary text-secondary-foreground border-border hover:bg-secondary/80 hover:border-border";
   if (weight >= 0.4)
-    return "bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground";
-  return "bg-muted/60 text-muted-foreground/80 border-border/60 hover:bg-muted hover:text-muted-foreground";
+    return "bg-muted text-foreground/80 border-border hover:bg-muted/80 hover:text-foreground";
+  return "bg-muted/70 text-foreground/60 border-border/70 hover:bg-muted hover:text-foreground/80";
 }
 
 export function SearchBubbles({ onSelect }: SearchBubblesProps) {

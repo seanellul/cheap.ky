@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/lib/contexts/cart-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { BottomNav } from "@/components/bottom-nav";
+import { AppBanner } from "@/components/app-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { HeaderCartBadge } from "@/components/header-cart-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -87,18 +88,55 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "Cheap.ky",
-              url: "https://cheap.ky",
-              description: "Compare grocery prices across Cayman Islands stores",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://cheap.ky/?q={search_term_string}",
-                "query-input": "required name=search_term_string",
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Cheap.ky",
+                url: "https://cheap.ky",
+                description:
+                  "Compare grocery prices across all Cayman Islands supermarkets. Track real-time prices from Foster's, Hurley's, Cost-U-Less, Priced Right & Shopright. 48,000+ products updated daily.",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: "https://cheap.ky/?q={search_term_string}",
+                  "query-input": "required name=search_term_string",
+                },
               },
-            }),
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "Cheap.ky",
+                url: "https://cheap.ky",
+                logo: "https://cheap.ky/favicon.svg",
+                description:
+                  "Cheap.ky is the Cayman Islands' only independent grocery price comparison platform. It tracks real-time prices across all major supermarkets in Grand Cayman so residents and visitors can find the cheapest groceries instantly.",
+                foundingDate: "2025",
+                slogan: "Don't just shop — be Cheap.ky",
+                areaServed: {
+                  "@type": "Place",
+                  name: "Cayman Islands",
+                  geo: { "@type": "GeoCoordinates", latitude: 19.3133, longitude: -81.2546 },
+                },
+                knowsAbout: [
+                  "Grocery prices in the Cayman Islands",
+                  "Cost of living in the Cayman Islands",
+                  "Cayman Islands supermarket comparison",
+                  "Food prices in Grand Cayman",
+                  "Saving money on groceries in Cayman",
+                  "Cayman Islands lifestyle and daily expenses",
+                  "Foster's Food Fair",
+                  "Hurley's Marketplace",
+                  "Cost-U-Less Cayman",
+                  "Priced Right Cayman",
+                  "Shopright Cayman",
+                ],
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  email: "hello@cheap.ky",
+                  contactType: "customer support",
+                },
+              },
+            ]),
           }}
         />
       </head>
@@ -118,6 +156,7 @@ export default function RootLayout({
                 <NavLink href="/report">Report</NavLink>
                 <NavLink href="/staples">Staples</NavLink>
                 <NavLink href="/blog">Blog</NavLink>
+                <NavLink href="/guides/grocery-prices-cayman-islands-2026">Guides</NavLink>
                 <NavLink href="/analytics">Analytics</NavLink>
                 <NavLink href="/cart">Cart</NavLink>
                 <NavLink href="/admin/ingest">Admin</NavLink>
@@ -129,6 +168,7 @@ export default function RootLayout({
           <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:pb-6">
             {children}
           </main>
+          <AppBanner />
           <BottomNav />
           <Toaster />
         </CartProvider>

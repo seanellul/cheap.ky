@@ -10,6 +10,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   "price-gaps": "Price Gaps",
   "store-comparison": "Store vs Store",
   "category-spotlight": "Category Spotlight",
+  evergreen: "Guide",
 };
 
 export const metadata: Metadata = {

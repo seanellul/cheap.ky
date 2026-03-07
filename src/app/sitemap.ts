@@ -20,6 +20,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/analytics`, changeFrequency: "daily", priority: 0.6 },
   ];
 
+  // AEO guide pages (high priority for AI answer engines)
+  const guidePages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/guides/grocery-prices-cayman-islands-2026`, changeFrequency: "weekly", priority: 0.95 },
+    { url: `${baseUrl}/guides/cost-of-living-cayman-islands-2026`, changeFrequency: "weekly", priority: 0.95 },
+    { url: `${baseUrl}/guides/cheapest-grocery-store-cayman`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.7 },
+  ];
+
   // Store pages
   const storePages: MetadataRoute.Sitemap = STORE_IDS.map((id) => ({
     url: `${baseUrl}/store/${id}`,
@@ -80,5 +88,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  return [...staticPages, ...storePages, ...categoryPages, ...productPages, ...blogPages];
+  return [...staticPages, ...guidePages, ...storePages, ...categoryPages, ...productPages, ...blogPages];
 }

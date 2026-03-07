@@ -5,6 +5,7 @@ import {
   getTopPriceGaps,
   getStoreComparisonData,
   getCategorySpotlightData,
+  getCheapestStoreData,
 } from "@/lib/blog/queries";
 import {
   weeklyReport,
@@ -12,6 +13,11 @@ import {
   storeComparison,
   categorySpotlight,
 } from "@/lib/blog/templates";
+import {
+  cheapestStoreArticle,
+  savingsTipsArticle,
+  costOfLivingArticle,
+} from "@/lib/blog/evergreen-templates";
 import type { BlogArticle } from "@/lib/blog/types";
 
 export const maxDuration = 60; // allow up to 60s (Pro plan) or 10s (Hobby)
@@ -30,6 +36,13 @@ const STORE_PAIRS: [string, string][] = [
 ];
 
 async function upsertArticle(article: BlogArticle, dataSnapshot?: object): Promise<void> {
+  // Merge FAQ data into the snapshot so it's available for FAQ schema at render time
+  const snapshot: Record<string, unknown> = { ...dataSnapshot };
+  if (article.faq && article.faq.length > 0) {
+    snapshot.faq = article.faq;
+  }
+  const snapshotJson = Object.keys(snapshot).length > 0 ? JSON.stringify(snapshot) : null;
+
   await taggedSql`
     INSERT INTO blog_posts (slug, title, description, content, category, tags, published_at, updated_at, data_snapshot)
     VALUES (
@@ -41,7 +54,7 @@ async function upsertArticle(article: BlogArticle, dataSnapshot?: object): Promi
       ${JSON.stringify(article.tags)},
       NOW(),
       NOW(),
-      ${dataSnapshot ? JSON.stringify(dataSnapshot) : null}
+      ${snapshotJson}
     )
     ON CONFLICT (slug)
     DO UPDATE SET
@@ -74,7 +87,7 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const type = url.searchParams.get("type"); // weekly, gaps, stores, categories, or null for all
+  const type = url.searchParams.get("type"); // weekly, gaps, stores, categories, evergreen, or null for all
 
   const results: string[] = [];
 
@@ -140,6 +153,20 @@ export async function GET(request: Request) {
         } catch {
           // skip failed categories
         }
+      }
+    }
+
+    // Evergreen articles
+    if (!type || type === "evergreen") {
+      const cheapestData = await getCheapestStoreData();
+      const articles = [
+        cheapestStoreArticle(cheapestData),
+        savingsTipsArticle(cheapestData),
+        costOfLivingArticle(cheapestData),
+      ];
+      for (const article of articles) {
+        await upsertArticle(article);
+        results.push(article.slug);
       }
     }
 

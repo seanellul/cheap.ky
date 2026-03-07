@@ -1,6 +1,23 @@
 import { NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
 
+/** Postgres returns bigint/numeric as strings — coerce to JS numbers */
+function numify<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(numify) as unknown as T;
+  if (typeof obj === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      out[k] = numify(v);
+    }
+    return out as T;
+  }
+  if (typeof obj === "string" && obj !== "" && !isNaN(Number(obj))) {
+    return Number(obj) as unknown as T;
+  }
+  return obj;
+}
+
 const MATCHED_CTE = `
   matched AS (
     SELECT p.id, p.canonical_name as name, p.brand, p.size, p.image_url,
@@ -25,6 +42,7 @@ const MATCHED_CTE = `
 `;
 
 export async function GET() {
+  try {
   // 1. Overall stats
   const [overview] = await rawSql(`
     WITH ${MATCHED_CTE}
@@ -77,7 +95,7 @@ export async function GET() {
         WHEN savings / worst_price * 100 > 0 THEN '1-10%'
         ELSE 'Same price'
       END
-    ORDER BY
+    ORDER BY MIN(
       CASE
         WHEN savings / worst_price * 100 >= 50 THEN 1
         WHEN savings / worst_price * 100 >= 30 THEN 2
@@ -85,7 +103,7 @@ export async function GET() {
         WHEN savings / worst_price * 100 >= 10 THEN 4
         WHEN savings / worst_price * 100 > 0 THEN 5
         ELSE 6
-      END
+      END)
   `);
 
   // 4. Category insights
@@ -221,7 +239,7 @@ export async function GET() {
     ...Object.fromEntries(allStoreIds.map(s => [s, Number(basketTotals[`all_${s}`])])),
   } : null;
 
-  return NextResponse.json({
+  return NextResponse.json(numify({
     overview,
     winRates,
     distribution,
@@ -233,5 +251,9 @@ export async function GET() {
     threeStoreProducts,
     purchasingPower,
     allThreeBasket,
-  });
+  }));
+  } catch (e: unknown) {
+    console.error("[report] Error:", e);
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  }
 }

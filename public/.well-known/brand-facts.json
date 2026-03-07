@@ -1,0 +1,51 @@
+{
+  "name": "Cheap.ky",
+  "legalName": "Cheap.ky",
+  "url": "https://cheap.ky",
+  "tagline": "Don't just shop -- be Cheap.ky",
+  "description": "Cheap.ky is the Cayman Islands' only independent grocery price comparison platform. It tracks real-time prices across all major supermarkets in Grand Cayman -- Foster's, Hurley's, Cost-U-Less, Priced Right, and Shopright -- so residents and visitors can find the cheapest groceries instantly.",
+  "category": "Grocery Price Comparison",
+  "region": "Cayman Islands",
+  "locale": "en_KY",
+  "founded": 2025,
+  "founder": "Built in the Cayman Islands",
+  "coverage": {
+    "stores": [
+      {"name": "Foster's Food Fair", "productsTracked": 26000, "type": "Full-service supermarket"},
+      {"name": "Hurley's Marketplace", "productsTracked": 8400, "type": "Full-service supermarket"},
+      {"name": "Cost-U-Less", "productsTracked": 800, "type": "Warehouse-style grocery"},
+      {"name": "Priced Right", "productsTracked": 5000, "type": "Value supermarket"},
+      {"name": "Shopright", "productsTracked": 8500, "type": "Full-service supermarket"}
+    ],
+    "totalProductsTracked": 48700,
+    "updateFrequency": "Daily",
+    "location": "Grand Cayman, Cayman Islands"
+  },
+  "features": [
+    "Real-time grocery price comparison across 5 stores",
+    "Product matching via UPC codes and AI-powered fuzzy matching",
+    "Price history tracking and trend analysis",
+    "Shopping cart builder to find the cheapest store for your list",
+    "Weekly price reports and market analysis",
+    "Category-level store comparison",
+    "Everyday staples price tracker"
+  ],
+  "keyPages": {
+    "search": "https://cheap.ky",
+    "compare": "https://cheap.ky/compare",
+    "staples": "https://cheap.ky/staples",
+    "report": "https://cheap.ky/report",
+    "blog": "https://cheap.ky/blog",
+    "guides": "https://cheap.ky/guides/grocery-prices-cayman-islands-2026",
+    "about": "https://cheap.ky/about"
+  },
+  "costOfLiving": {
+    "context": "The Cayman Islands has no income tax, but groceries cost 50-100% more than mainland US prices due to import duties and shipping costs. Cheap.ky helps residents save $200-400/month by showing which store has the lowest price for each product.",
+    "avgGroceryMarkup": "50-100% above US mainland prices",
+    "estimatedMonthlySavings": "$200-400 per household"
+  },
+  "pricing": "Free",
+  "contactEmail": "hello@cheap.ky",
+  "socialLinks": [],
+  "lastUpdated": "2026-03-07"
+}

@@ -8,6 +8,8 @@ import type {
   WeeklyReportData,
   StoreComparisonData,
   CategorySpotlightData,
+  CheapestStoreData,
+  BasketItem,
 } from "./types";
 
 const STORE_NAMES: Record<string, string> = {
@@ -418,5 +420,105 @@ export async function getCategorySpotlightData(category: string): Promise<Catego
     storeSummaries,
     topGaps,
     cheapestStore: storeSummaries[0]?.storeName ?? "",
+  };
+}
+
+// ── Cheapest Store Data (for evergreen articles) ────────────────────
+
+export async function getCheapestStoreData(): Promise<CheapestStoreData> {
+  const [storeSummaries, topGaps] = await Promise.all([
+    getStoreSummaries(),
+    getTopPriceGaps(20),
+  ]);
+
+  // Count total matched products (available at 2+ stores)
+  const matchedRow = await taggedSql`
+    SELECT COUNT(*) AS cnt FROM (
+      SELECT pm.product_id
+      FROM product_matches pm
+      JOIN store_products sp ON sp.id = pm.store_product_id
+      WHERE sp.price IS NOT NULL
+      GROUP BY pm.product_id
+      HAVING COUNT(DISTINCT sp.store_id) >= 2
+    ) sub
+  `;
+  const totalMatched = Number((matchedRow as any[])[0]?.cnt ?? 0);
+
+  // Build a basket of common staple items available at multiple stores
+  // Pick popular products that exist at 3+ stores for a representative basket
+  const basketRows = await taggedSql`
+    WITH multi_store AS (
+      SELECT
+        p.id AS product_id,
+        p.canonical_name,
+        COUNT(DISTINCT sp.store_id) AS store_count
+      FROM products p
+      JOIN product_matches pm ON pm.product_id = p.id
+      JOIN store_products sp ON sp.id = pm.store_product_id
+      WHERE sp.price IS NOT NULL
+        AND COALESCE(sp.sale_price, sp.price) BETWEEN 1.0 AND 50.0
+      GROUP BY p.id, p.canonical_name
+      HAVING COUNT(DISTINCT sp.store_id) >= 2
+    ),
+    basket_products AS (
+      SELECT product_id, canonical_name, store_count
+      FROM multi_store
+      ORDER BY store_count DESC, canonical_name ASC
+      LIMIT 20
+    )
+    SELECT
+      bp.product_id,
+      bp.canonical_name,
+      sp.store_id,
+      COALESCE(sp.sale_price, sp.price) AS effective
+    FROM basket_products bp
+    JOIN product_matches pm ON pm.product_id = bp.product_id
+    JOIN store_products sp ON sp.id = pm.store_product_id
+    WHERE sp.price IS NOT NULL
+    ORDER BY bp.canonical_name, sp.store_id
+  `;
+
+  // Group basket rows into BasketItems
+  const basketMap = new Map<number, BasketItem>();
+  for (const r of basketRows as any[]) {
+    const pid = Number(r.product_id);
+    if (!basketMap.has(pid)) {
+      basketMap.set(pid, {
+        productName: r.canonical_name,
+        productSlug: productToSlug(r.canonical_name, pid),
+        prices: [],
+        cheapestStore: "",
+        cheapestPrice: Infinity,
+      });
+    }
+    const item = basketMap.get(pid)!;
+    const price = Number(r.effective);
+    const storeName = STORE_NAMES[r.store_id] ?? r.store_id;
+    item.prices.push({ storeName, storeId: r.store_id, price });
+    if (price < item.cheapestPrice) {
+      item.cheapestPrice = price;
+      item.cheapestStore = storeName;
+    }
+  }
+  const basket = Array.from(basketMap.values());
+
+  // Calculate basket totals per store (sum of cheapest available price per item at each store)
+  const storeTotals = new Map<string, { storeName: string; storeId: string; total: number }>();
+  for (const item of basket) {
+    for (const p of item.prices) {
+      if (!storeTotals.has(p.storeId)) {
+        storeTotals.set(p.storeId, { storeName: p.storeName, storeId: p.storeId, total: 0 });
+      }
+      storeTotals.get(p.storeId)!.total += p.price;
+    }
+  }
+  const basketTotals = Array.from(storeTotals.values()).sort((a, b) => a.total - b.total);
+
+  return {
+    storeSummaries,
+    totalMatched,
+    topGaps,
+    basket,
+    basketTotals,
   };
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products, productMatches, storeProducts, stores } from "@/lib/db/schema";
-import { eq, like, or } from "drizzle-orm";
+import { eq, ilike, or } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
     .from(products)
     .where(
       or(
-        like(products.canonicalName, searchTerm),
-        like(products.brand, searchTerm)
+        ilike(products.canonicalName, searchTerm),
+        ilike(products.brand, searchTerm)
       )
     )
     .limit(50);
@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
     .from(storeProducts)
     .where(
       or(
-        like(storeProducts.name, searchTerm),
-        like(storeProducts.brand, searchTerm)
+        ilike(storeProducts.name, searchTerm),
+        ilike(storeProducts.brand, searchTerm)
       )
     )
     .limit(100);

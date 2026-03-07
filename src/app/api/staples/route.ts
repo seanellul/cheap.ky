@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { staples, stapleProducts, storeProducts } from "@/lib/db/schema";
-import { eq, and, like, isNotNull, or } from "drizzle-orm";
+import { eq, and, ilike, isNotNull, or } from "drizzle-orm";
 
 export async function GET() {
   const allStaples = await db.select().from(staples).orderBy(staples.sortOrder);
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       and(
         eq(storeProducts.storeId, storeId),
         isNotNull(storeProducts.price),
-        like(storeProducts.name, `%${query}%`)
+        ilike(storeProducts.name, `%${query}%`)
       )
     )
     .limit(20);

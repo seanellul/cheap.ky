@@ -1,6 +1,6 @@
 import { db } from "../lib/db";
 import { staples, stapleProducts, storeProducts } from "../lib/db/schema";
-import { like, and, eq, or, isNotNull } from "drizzle-orm";
+import { ilike, and, eq, or, isNotNull } from "drizzle-orm";
 
 const STAPLE_ITEMS = [
   // Produce
@@ -81,7 +81,7 @@ async function seedStaples() {
     }
 
     // Auto-match: find cheapest relevant product at each store
-    const storeIds = ["fosters", "hurleys", "costuless", "pricedright"];
+    const storeIds = ["fosters", "hurleys", "costuless", "pricedright", "shopright"];
 
     for (const storeId of storeIds) {
       // Check if already manually linked
@@ -100,9 +100,12 @@ async function seedStaples() {
       if (existingLink.length > 0) continue; // Don't override manual links
 
       // Search for matching products using keywords
-      const conditions = item.keywords.map((kw) =>
-        like(storeProducts.name, `%${kw}%`)
-      );
+      // Use word-boundary-aware patterns to avoid substring false positives
+      // e.g., "apple" should NOT match "Pineapple", "egg" should NOT match "Reggiano"
+      const conditions = item.keywords.flatMap((kw) => [
+        ilike(storeProducts.name, `${kw}%`),     // starts with keyword
+        ilike(storeProducts.name, `% ${kw}%`),   // keyword after space
+      ]);
 
       const matches = await db
         .select()
@@ -123,9 +126,16 @@ async function seedStaples() {
         const nameLower = m.name.toLowerCase();
         let score = 0;
 
-        // Exact keyword in name boosts score
+        // Word-boundary keyword match boosts score
         for (const kw of item.keywords) {
-          if (nameLower.includes(kw.toLowerCase())) score += 10;
+          const kwLower = kw.toLowerCase();
+          // Check if keyword appears as a whole word (not substring of another word)
+          const regex = new RegExp(`(^|\\s)${kwLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$|s\\b|es\\b)`, 'i');
+          if (regex.test(nameLower)) {
+            score += 15; // strong match
+          } else if (nameLower.includes(kwLower)) {
+            score += 3; // weak substring match
+          }
         }
 
         // Penalize very long names (likely combo packs or unrelated)

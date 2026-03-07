@@ -152,6 +152,31 @@ export const blogPosts = pgTable("blog_posts", {
   dataSnapshot: text("data_snapshot"), // JSON blob of data used to generate the article (for regeneration)
 });
 
+// Public analytics events (no PII stored)
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // search, product_view, compare_view, page_view
+  data: text("data"), // search query, product slug, etc.
+  productId: integer("product_id"),
+  resultCount: integer("result_count"), // for searches: how many results returned
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Daily aggregated stats (rolled up from events for fast queries)
+export const analyticsDailyStats = pgTable(
+  "analytics_daily_stats",
+  {
+    id: serial("id").primaryKey(),
+    date: text("date").notNull(), // YYYY-MM-DD
+    totalSearches: integer("total_searches").notNull().default(0),
+    uniqueQueries: integer("unique_queries").notNull().default(0),
+    productViews: integer("product_views").notNull().default(0),
+    compareViews: integer("compare_views").notNull().default(0),
+    pageViews: integer("page_views").notNull().default(0),
+  },
+  (table) => [uniqueIndex("daily_stats_date_idx").on(table.date)]
+);
+
 // Curated staple/commodity items for cross-store comparison
 export const staples = pgTable("staples", {
   id: serial("id").primaryKey(),

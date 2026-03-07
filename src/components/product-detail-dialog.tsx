@@ -14,6 +14,7 @@ import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { ProductImage } from "@/components/product-image";
 import { formatKYD } from "@/lib/utils/currency";
+import { track } from "@/lib/utils/track";
 
 interface StoreMatch {
   storeProductId: number;
@@ -61,7 +62,10 @@ export function ProductDetailDialog({ productId, onClose, onAddToCart }: Product
     setData(null);
     fetch(`/api/product/${productId}`)
       .then((r) => r.json())
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        track("product_view", d?.product?.name ?? null, { productId });
+      })
       .finally(() => setLoading(false));
   }, [productId]);
 

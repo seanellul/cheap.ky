@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { track } from "@/lib/utils/track";
 
 interface SearchResult {
   id: number;
@@ -40,7 +41,9 @@ export function SearchBar({ onResults, onLoadingChange }: SearchBarProps) {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        onResults(data.results || []);
+        const results = data.results || [];
+        onResults(results);
+        track("search", query, { resultCount: results.length });
       } catch {
         onResults([]);
       } finally {

@@ -9,6 +9,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
+import { track } from "@/lib/utils/track";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright"] as const;
 
@@ -71,6 +72,7 @@ export default function ComparePage() {
 
   useEffect(() => {
     fetchData();
+    track("compare_view");
   }, [fetchData]);
 
   function handleSearch(e: React.FormEvent) {

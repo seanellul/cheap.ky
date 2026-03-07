@@ -16,6 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/prices`, changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/staples`, changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/category`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${baseUrl}/blog`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${baseUrl}/analytics`, changeFrequency: "daily", priority: 0.6 },
   ];
 
   // Store pages

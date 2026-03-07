@@ -118,6 +118,7 @@ export default function RootLayout({
                 <NavLink href="/report">Report</NavLink>
                 <NavLink href="/staples">Staples</NavLink>
                 <NavLink href="/blog">Blog</NavLink>
+                <NavLink href="/analytics">Analytics</NavLink>
                 <NavLink href="/cart">Cart</NavLink>
                 <NavLink href="/admin/ingest">Admin</NavLink>
                 <HeaderCartBadge />

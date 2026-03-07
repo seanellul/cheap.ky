@@ -171,6 +171,7 @@ export default function RootLayout({
                 <NavLink href="/guides/grocery-prices-cayman-islands-2026">Guides</NavLink>
                 <NavLink href="/analytics">Analytics</NavLink>
                 <NavLink href="/cart">Cart</NavLink>
+                <NavLink href="/history">History</NavLink>
                 <HeaderCartBadge />
                 <ThemeToggle />
               </nav>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Search, Loader2, ArrowUpDown, ScanBarcode } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { addSearchEntry } from "@/lib/history";
 
 const BarcodeScanner = lazy(() =>
   import("@/components/barcode-scanner").then((m) => ({ default: m.BarcodeScanner }))
@@ -65,7 +66,11 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&sort=${s}`);
         const data = await res.json();
-        onResults(data.results || []);
+        const results = data.results || [];
+        onResults(results);
+        if (results.length > 0) {
+          addSearchEntry(q, results.length);
+        }
       } catch {
         onResults([]);
       } finally {

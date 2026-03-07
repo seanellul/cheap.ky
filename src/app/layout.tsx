@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { CartProvider } from "@/lib/contexts/cart-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { PostHogProvider } from "@/lib/contexts/posthog-provider";
@@ -15,14 +15,16 @@ import { NavLink } from "@/components/nav-link";
 import { MobileMenu } from "@/components/mobile-menu";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -145,7 +147,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${dmSans.variable} ${plusJakarta.variable} antialiased`}
       >
         <PostHogProvider>
         <Suspense fallback={null}><PostHogPageView /></Suspense>

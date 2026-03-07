@@ -84,14 +84,8 @@ interface ReportData {
     pct_diff: number;
   }>;
   purchasingPower: Record<string, Record<string, number>>;
-  allThreeBasket: {
-    count: number;
-    fosters: number;
-    hurleys: number;
-    costuless: number;
-    pricedright: number;
-    shopright: number;
-  } | null;
+  storeIndex: Record<string, { index: number; count: number }>;
+  totalProducts: number;
 }
 
 const STORE_COLORS: Record<string, string> = {
@@ -183,7 +177,7 @@ export default function ReportPage() {
     );
   }
 
-  const { overview, winRates, distribution, categoryInsights, biggestGaps, storeBests, headToHead, storeCounts, threeStoreProducts, purchasingPower, allThreeBasket } = data;
+  const { overview, winRates, distribution, categoryInsights, biggestGaps, storeBests, headToHead, storeCounts, threeStoreProducts, purchasingPower, storeIndex, totalProducts } = data;
   const totalDistribution = distribution.reduce((a, b) => a + b.count, 0);
 
   const distributionColors: Record<string, string> = {
@@ -308,26 +302,29 @@ export default function ReportPage() {
           <h2 className="text-lg font-bold">What Does $100 Get You?</h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          If you buy the same products at each store, here&apos;s how far your dollar stretches.
-          Based on {allThreeBasket ? allThreeBasket.count.toLocaleString() + ` products available at all ${ALL_STORE_IDS.length} stores` : "matched product prices"}.
+          On average, how far does $100 stretch at each store? Based on per-product price
+          comparisons across {totalProducts.toLocaleString()} comparable products — each product
+          weighted equally regardless of price.
         </p>
 
         {/* The $100 visual comparison */}
-        {allThreeBasket && (() => {
+        {(() => {
           const stores = ALL_STORE_IDS
-            .filter(id => allThreeBasket[id] != null && allThreeBasket[id] > 0)
-            .map(id => ({ id, name: STORE_NAMES[id], total: allThreeBasket[id] as number }))
-            .sort((a, b) => a.total - b.total);
+            .filter(id => storeIndex[id] != null)
+            .map(id => ({ id, name: STORE_NAMES[id], index: storeIndex[id].index, count: storeIndex[id].count }))
+            .sort((a, b) => a.index - b.index);
+
+          if (stores.length === 0) return null;
 
           const cheapest = stores[0];
           const baseAmount = 100;
 
           return (
             <div className="space-y-6">
-              {/* Big visual: normalized to cheapest = $100 */}
+              {/* Big visual: normalized so cheapest = $100 */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {stores.map((store) => {
-                  const equivalent = baseAmount * store.total / cheapest.total;
+                  const equivalent = baseAmount * store.index / cheapest.index;
                   const isCheapest = store.id === cheapest.id;
                   const extra = equivalent - baseAmount;
 
@@ -351,7 +348,7 @@ export default function ReportPage() {
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
                         {isCheapest
-                          ? "for the same basket"
+                          ? "best value on average"
                           : <>costs <span className="font-semibold text-destructive">{formatKYD(extra)} more</span></>
                         }
                       </div>
@@ -360,6 +357,9 @@ export default function ReportPage() {
                           ({((extra / baseAmount) * 100).toFixed(1)}% more expensive)
                         </div>
                       )}
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        {store.count.toLocaleString()} products compared
+                      </div>
                     </div>
                   );
                 })}
@@ -370,6 +370,7 @@ export default function ReportPage() {
                 <h3 className="text-sm font-semibold mb-2">Store-to-Store Conversion</h3>
                 <p className="text-xs text-muted-foreground mb-3">
                   &quot;If I spend $100 at Store A, the same products would cost me X at Store B&quot;
+                  — averaged across all products both stores carry.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -413,7 +414,7 @@ export default function ReportPage() {
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
                   Read across: &quot;$100 at Store A buys the same products that would cost $X at Store B.&quot;
-                  Green = you save money, red = you pay more.
+                  Green = you save money, red = you pay more. Each ratio is based on the products both stores share.
                 </p>
               </div>
             </div>

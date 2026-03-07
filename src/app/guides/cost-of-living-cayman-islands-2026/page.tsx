@@ -45,7 +45,7 @@ export default function CostOfLivingGuidePage() {
       headline:
         "Cost of Living in the Cayman Islands (2026) -- Food, Groceries & Daily Expenses",
       description:
-        "Comprehensive guide to the cost of living in the Cayman Islands with real grocery price data from 48,000+ products across 5 stores.",
+        "Comprehensive guide to the cost of living in the Cayman Islands with real grocery price data from 48,000+ products across all major stores.",
       datePublished: "2026-01-20",
       dateModified: "2026-03-07",
       author: {
@@ -116,7 +116,7 @@ export default function CostOfLivingGuidePage() {
           name: "How much does food cost in the Cayman Islands?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Groceries for a couple cost $800-$1,200/month in the Cayman Islands. Dining out at a casual restaurant costs $15-25 per person, while mid-range restaurants run $40-80 per person. A coffee costs $4-7. Using Cheap.ky to compare grocery prices across all 5 Cayman supermarkets can save $200-400/month by finding the lowest price for each item.",
+            text: "Groceries for a couple cost $800-$1,200/month in the Cayman Islands. Dining out at a casual restaurant costs $15-25 per person, while mid-range restaurants run $40-80 per person. A coffee costs $4-7. Using Cheap.ky to compare grocery prices across all major Cayman supermarkets can save $200-400/month by finding the lowest price for each item.",
           },
         },
         {
@@ -296,7 +296,7 @@ export default function CostOfLivingGuidePage() {
                 Food is the largest controllable expense for Cayman residents.
                 Nearly everything is imported, and import duties of 22-27% are
                 added on top of shipping costs. However, prices vary
-                dramatically between the 5 major supermarkets.
+                dramatically between the major supermarkets.
               </p>
               <p>
                 <a href="https://cheap.ky">Cheap.ky</a> tracks 48,000+
@@ -571,7 +571,7 @@ export default function CostOfLivingGuidePage() {
                 Groceries for a couple cost $800-$1,200/month. Dining out at a
                 casual restaurant costs $15-25 per person. Using{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> to compare prices
-                across all 5 Cayman supermarkets typically saves $200-400/month.
+                across all major Cayman supermarkets typically saves $200-400/month.
               </p>
 
               <h3>What salary do you need to live in the Cayman Islands?</h3>
@@ -607,7 +607,7 @@ export default function CostOfLivingGuidePage() {
               <ul>
                 <li>
                   <a href="https://cheap.ky">Cheap.ky</a> -- Compare grocery
-                  prices across all 5 Cayman stores in real time
+                  prices across all major Cayman stores in real time
                 </li>
                 <li>
                   <a href="https://cheap.ky/staples">Staples Tracker</a> --

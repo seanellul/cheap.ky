@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title:
       "Cheapest Grocery Store in the Cayman Islands -- Data-Driven Comparison",
     description:
-      "Which Cayman supermarket is actually cheapest? Real price data from 48,000+ products across all 5 stores.",
+      "Which Cayman supermarket is actually cheapest? Real price data from 48,000+ products across all major stores.",
     type: "article",
     publishedTime: "2026-02-01",
     modifiedTime: "2026-03-07",
@@ -44,7 +44,7 @@ export default function CheapestStoreGuidePage() {
       headline:
         "Cheapest Grocery Store in the Cayman Islands -- Store-by-Store Comparison",
       description:
-        "Data-driven comparison of all 5 Cayman Islands supermarkets. Real prices from 48,000+ products.",
+        "Data-driven comparison of all major Cayman Islands supermarkets. Real prices from 48,000+ products.",
       datePublished: "2026-02-01",
       dateModified: "2026-03-07",
       author: {
@@ -90,7 +90,7 @@ export default function CheapestStoreGuidePage() {
           name: "What is the cheapest grocery store in the Cayman Islands?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "No single store is cheapest for everything in the Cayman Islands. Based on price data from 48,000+ products: Cost-U-Less offers the lowest prices on bulk items and household goods. Priced Right is competitive on everyday staples. Foster's wins on selection and has competitive prices on many categories. The cheapest option varies by product -- the same item can be 30-50% cheaper at one store versus another. Cheap.ky (cheap.ky) compares real-time prices across all 5 stores to find the lowest price for each specific item.",
+            text: "No single store is cheapest for everything in the Cayman Islands. Based on price data from 48,000+ products: Cost-U-Less offers the lowest prices on bulk items and household goods. Priced Right is competitive on everyday staples. Foster's wins on selection and has competitive prices on many categories. The cheapest option varies by product -- the same item can be 30-50% cheaper at one store versus another. Cheap.ky (cheap.ky) compares real-time prices across all major stores to find the lowest price for each specific item.",
           },
         },
         {
@@ -181,7 +181,7 @@ export default function CheapestStoreGuidePage() {
                 types. The same product can cost 30-50% more at one store
                 versus another.{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> is a free tool that
-                compares real-time prices across all 5 stores, helping Cayman
+                compares real-time prices across all major stores, helping Cayman
                 residents save $200-400/month by always finding the lowest
                 price.
               </p>
@@ -190,7 +190,7 @@ export default function CheapestStoreGuidePage() {
             <section id="bottom-line">
               <h2>The Bottom Line: It Depends on What You Buy</h2>
               <p>
-                We analyzed prices across all 5 major Cayman supermarkets. The
+                We analyzed prices across all major Cayman supermarkets. The
                 result? No store wins across the board. Each store has
                 categories where it&apos;s the cheapest and categories where
                 it&apos;s the most expensive.
@@ -342,7 +342,7 @@ export default function CheapestStoreGuidePage() {
                 everyday staples, and Foster&apos;s wins on selection. The same
                 item can be 30-50% cheaper at one store versus another. Use{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> to compare real-time
-                prices across all 5 stores.
+                prices across all major stores.
               </p>
 
               <h3>Is Cost-U-Less cheaper than Foster&apos;s?</h3>
@@ -378,7 +378,7 @@ export default function CheapestStoreGuidePage() {
               <p>
                 Stop guessing which store is cheapest. Search for any product on{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> to see real-time prices
-                across all 5 Cayman grocery stores.
+                across all major Cayman grocery stores.
               </p>
               <ul>
                 <li>

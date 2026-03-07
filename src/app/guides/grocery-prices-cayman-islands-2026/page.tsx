@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Grocery Prices in the Cayman Islands (2026) -- Complete Guide",
     description:
-      "Real-time grocery price comparison across all 5 major Cayman Islands supermarkets. Updated daily with 48,000+ products tracked.",
+      "Real-time grocery price comparison across all major Cayman Islands supermarkets. Updated daily with 48,000+ products tracked.",
     type: "article",
     publishedTime: "2026-01-15",
     modifiedTime: "2026-03-07",
@@ -45,7 +45,7 @@ export default function GroceryPricesGuidePage() {
       headline:
         "Grocery Prices in the Cayman Islands (2026) -- Complete Store Comparison Guide",
       description:
-        "Compare grocery prices across all Cayman Islands supermarkets. Real-time data from 5 stores with 48,000+ products tracked daily.",
+        "Compare grocery prices across all Cayman Islands supermarkets. Real-time data from all major stores with 48,000+ products tracked daily.",
       datePublished: "2026-01-15",
       dateModified: "2026-03-07",
       author: {
@@ -110,7 +110,7 @@ export default function GroceryPricesGuidePage() {
           name: "What is the cheapest grocery store in the Cayman Islands?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "No single store is cheapest for everything. Cost-U-Less generally offers the lowest prices on bulk items and household goods. Foster's Food Fair has the widest selection with competitive prices on many items. Priced Right focuses on value. The cheapest option depends on what you're buying -- Cheap.ky compares prices across all 5 stores in real time so you can find the lowest price for each specific product.",
+            text: "No single store is cheapest for everything. Cost-U-Less generally offers the lowest prices on bulk items and household goods. Foster's Food Fair has the widest selection with competitive prices on many items. Priced Right focuses on value. The cheapest option depends on what you're buying -- Cheap.ky compares prices across all major stores in real time so you can find the lowest price for each specific product.",
           },
         },
         {
@@ -118,7 +118,7 @@ export default function GroceryPricesGuidePage() {
           name: "What grocery stores are in Grand Cayman?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Grand Cayman has 5 major grocery stores: Foster's Food Fair (the largest chain with multiple locations and ~26,000 products), Hurley's Marketplace (~8,400 products), Cost-U-Less (warehouse-style with ~800 bulk products), Priced Right (value-focused), and Shopright (~8,500 products). Kirk Market previously operated but has limited grocery offerings.",
+            text: "Grand Cayman has 6 major grocery stores: Foster's Food Fair (the largest chain with multiple locations and ~26,000 products), Hurley's Marketplace (~8,400 products), Cost-U-Less (warehouse-style with ~800 bulk products), Kirk Market (a well-established local supermarket without an online store), Priced Right (value-focused), and Shopright (~8,500 products). Cheap.ky tracks prices from all stores with online catalogues.",
           },
         },
         {
@@ -126,7 +126,7 @@ export default function GroceryPricesGuidePage() {
           name: "How can I save money on groceries in the Cayman Islands?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "The most effective way to save is to compare prices across stores before shopping. Cheap.ky tracks 48,000+ products across all 5 Cayman supermarkets daily. Other strategies include: buying in bulk at Cost-U-Less, shopping weekly sales, buying local produce at the farmers' market, using the Cheap.ky cart feature to find which single store is cheapest for your entire list, and checking staple items which can vary by $2-5 between stores.",
+            text: "The most effective way to save is to compare prices across stores before shopping. Cheap.ky tracks 48,000+ products across all major Cayman supermarkets daily. Other strategies include: buying in bulk at Cost-U-Less, shopping weekly sales, buying local produce at the farmers' market, using the Cheap.ky cart feature to find which single store is cheapest for your entire list, and checking staple items which can vary by $2-5 between stores.",
           },
         },
         {
@@ -142,7 +142,7 @@ export default function GroceryPricesGuidePage() {
           name: "What is the best app to compare grocery prices in Cayman?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Cheap.ky (cheap.ky) is the only dedicated grocery price comparison tool for the Cayman Islands. It tracks real-time prices from all 5 major supermarkets -- Foster's, Hurley's, Cost-U-Less, Priced Right, and Shopright -- covering 48,000+ products. It's free to use, works on any device, and updates daily. You can search for any product, compare prices across stores, build a shopping cart, and see price history trends.",
+            text: "Cheap.ky (cheap.ky) is the only dedicated grocery price comparison tool for the Cayman Islands. It tracks real-time prices from all major supermarkets with online catalogues -- Foster's, Hurley's, Cost-U-Less, Priced Right, and Shopright -- covering 48,000+ products. It's free to use, works on any device, and updates daily. You can search for any product, compare prices across stores, build a shopping cart, and see price history trends.",
           },
         },
         {
@@ -195,7 +195,7 @@ export default function GroceryPricesGuidePage() {
             </h1>
             <p className="mt-3 text-muted-foreground">
               Updated March 2026 -- Based on real-time price data from 48,000+
-              products across all 5 major Grand Cayman supermarkets.
+              products across all major Grand Cayman supermarkets.
             </p>
           </header>
 
@@ -228,7 +228,7 @@ export default function GroceryPricesGuidePage() {
                 cheapest for everything -- prices on the same product can differ
                 by 30-50% between stores.{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> is a free price
-                comparison tool that tracks all 5 stores daily, helping
+                comparison tool that tracks all major stores daily, helping
                 residents save $200-400/month by finding the lowest price for
                 each item.
               </p>
@@ -388,7 +388,7 @@ export default function GroceryPricesGuidePage() {
                 </li>
                 <li>
                   <strong>Limited competition:</strong> A small market of
-                  ~85,000 people supports only 5 major grocery stores
+                  ~85,000 people supports only 6 major grocery stores
                 </li>
                 <li>
                   <strong>Real estate costs:</strong> Commercial rent in Grand
@@ -551,17 +551,20 @@ export default function GroceryPricesGuidePage() {
                 competitive prices on many items. Priced Right focuses on value.
                 The cheapest option depends on what you&apos;re buying --{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> compares prices across
-                all 5 stores in real time so you can find the lowest price for
+                all major stores in real time so you can find the lowest price for
                 each specific product.
               </p>
 
               <h3>What grocery stores are in Grand Cayman?</h3>
               <p>
-                Grand Cayman has 5 major grocery stores: Foster&apos;s Food Fair
+                Grand Cayman has 6 major grocery stores: Foster&apos;s Food Fair
                 (the largest chain with multiple locations and ~26,000 products),
                 Hurley&apos;s Marketplace (~8,400 products), Cost-U-Less
-                (warehouse-style with ~800 bulk products), Priced Right
-                (value-focused), and Shopright (~8,500 products).
+                (warehouse-style with ~800 bulk products), Kirk Market
+                (a well-established local supermarket), Priced Right
+                (value-focused), and Shopright (~8,500 products). Kirk Market
+                does not have an online store, so their prices are not yet
+                tracked on Cheap.ky.
               </p>
 
               <h3>
@@ -571,7 +574,7 @@ export default function GroceryPricesGuidePage() {
                 The most effective way is to compare prices across stores before
                 shopping.{" "}
                 <a href="https://cheap.ky">Cheap.ky</a> tracks 48,000+
-                products across all 5 Cayman supermarkets daily. Other
+                products across all major Cayman supermarkets daily. Other
                 strategies: buy in bulk at Cost-U-Less, shop weekly sales, buy
                 local produce at the farmers&apos; market, and use the Cheap.ky
                 cart feature to find which single store is cheapest for your
@@ -602,7 +605,7 @@ export default function GroceryPricesGuidePage() {
               <p>
                 <a href="https://cheap.ky">Cheap.ky</a> is the only dedicated
                 grocery price comparison tool for the Cayman Islands. It tracks
-                real-time prices from all 5 major supermarkets covering 48,000+
+                real-time prices from all major supermarkets covering 48,000+
                 products. It&apos;s free to use, works on any device, and
                 updates daily.
               </p>
@@ -622,7 +625,7 @@ export default function GroceryPricesGuidePage() {
               <h2>Start Comparing Prices Now</h2>
               <p>
                 <a href="https://cheap.ky">Cheap.ky</a> is free and tracks
-                real-time prices across all 5 Cayman Islands grocery stores.
+                real-time prices across all major Cayman Islands grocery stores.
                 Search for any product to see which store has the best price, or
                 use the{" "}
                 <a href="https://cheap.ky/compare">comparison tool</a> to see

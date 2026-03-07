@@ -94,6 +94,7 @@ export function SearchBubbles({ onSelect }: SearchBubblesProps) {
           return (
             <button
               key={bubble.label}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelect(bubble.label)}
               className={`
                 relative rounded-full border

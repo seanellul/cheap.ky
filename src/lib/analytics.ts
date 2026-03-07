@@ -33,6 +33,10 @@ export function trackStapleAddToCart(stapleName: string) {
   capture("staple_add_to_cart", { staple_name: stapleName });
 }
 
+export function trackBatchAddToCart(category: string, count: number) {
+  capture("batch_add_to_cart", { category, count });
+}
+
 // Compare
 export function trackCompare(productName: string, storeCount: number) {
   capture("compare_viewed", { product_name: productName, store_count: storeCount });

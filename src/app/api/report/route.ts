@@ -187,29 +187,36 @@ export async function GET() {
     LIMIT 10
   `);
 
-  // 10. Purchasing power
-  const pairCols: string[] = [];
+  // 10. Purchasing power — per-product average price index (each product weighted equally)
+  // For each store, avg(store_price / best_price) gives a price index (1.0 = always cheapest)
+  const indexCols = allStoreIds.map(s =>
+    `ROUND(AVG(CASE WHEN ${s}_price IS NOT NULL THEN ${s}_price / best_price END)::numeric, 4) as ${s}_idx`
+  );
+  const countCols = allStoreIds.map(s => `COUNT(${s}_price) as ${s}_count`);
+  const [priceIndex] = await rawSql(`
+    WITH ${MATCHED_CTE}
+    SELECT COUNT(*) as total_products,
+      ${indexCols.join(',\n      ')},
+      ${countCols.join(',\n      ')}
+    FROM matched
+  `);
+
+  // Pairwise conversion: avg(B_price / A_price) for shared products
+  const pairRatios: string[] = [];
   for (let i = 0; i < allStoreIds.length; i++) {
     for (let j = i + 1; j < allStoreIds.length; j++) {
       const a = allStoreIds[i], b = allStoreIds[j];
-      const prefix = `${a.charAt(0)}${b.charAt(0)}`;
-      const cond = `${a}_price IS NOT NULL AND ${b}_price IS NOT NULL`;
-      pairCols.push(
-        `SUM(CASE WHEN ${cond} THEN ${a}_price ELSE 0 END) as ${prefix}_${a}`,
-        `SUM(CASE WHEN ${cond} THEN ${b}_price ELSE 0 END) as ${prefix}_${b}`,
-        `COUNT(CASE WHEN ${cond} THEN 1 END) as ${prefix}_count`
+      const cond = `${a}_price IS NOT NULL AND ${b}_price IS NOT NULL AND ${a}_price > 0`;
+      pairRatios.push(
+        `ROUND(AVG(CASE WHEN ${cond} THEN ${b}_price / ${a}_price END)::numeric, 4) as r_${a}_${b}`,
+        `ROUND(AVG(CASE WHEN ${cond} THEN ${a}_price / ${b}_price END)::numeric, 4) as r_${b}_${a}`,
+        `COUNT(CASE WHEN ${cond} THEN 1 END) as n_${a}_${b}`
       );
     }
   }
-  const allCond = allStoreIds.map(s => `${s}_price IS NOT NULL`).join(' AND ');
-  for (const s of allStoreIds) {
-    pairCols.push(`SUM(CASE WHEN ${allCond} THEN ${s}_price ELSE 0 END) as all_${s}`);
-  }
-  pairCols.push(`COUNT(CASE WHEN ${allCond} THEN 1 END) as all_count`);
-
-  const [basketTotals] = await rawSql(`
+  const [ratios] = await rawSql(`
     WITH ${MATCHED_CTE}
-    SELECT ${pairCols.join(',\n      ')}
+    SELECT ${pairRatios.join(',\n      ')}
     FROM matched
   `);
 
@@ -220,20 +227,21 @@ export async function GET() {
   for (let i = 0; i < allStoreIds.length; i++) {
     for (let j = i + 1; j < allStoreIds.length; j++) {
       const a = allStoreIds[i], b = allStoreIds[j];
-      const prefix = `${a.charAt(0)}${b.charAt(0)}`;
-      const totalA = Number(basketTotals[`${prefix}_${a}`]);
-      const totalB = Number(basketTotals[`${prefix}_${b}`]);
-      if (totalA > 0 && totalB > 0) {
-        purchasingPower[a][b] = Math.round(100 * totalB / totalA * 100) / 100;
-        purchasingPower[b][a] = Math.round(100 * totalA / totalB * 100) / 100;
-      }
+      const rAtoB = Number(ratios[`r_${a}_${b}`]);
+      const rBtoA = Number(ratios[`r_${b}_${a}`]);
+      if (rAtoB > 0) purchasingPower[a][b] = Math.round(100 * rAtoB * 100) / 100;
+      if (rBtoA > 0) purchasingPower[b][a] = Math.round(100 * rBtoA * 100) / 100;
     }
   }
 
-  const allThreeBasket = Number(basketTotals.all_count) > 0 ? {
-    count: Number(basketTotals.all_count),
-    ...Object.fromEntries(allStoreIds.map(s => [s, Number(basketTotals[`all_${s}`])])),
-  } : null;
+  // Build the store price index for the $100 comparison
+  const storeIndex: Record<string, { index: number; count: number }> = {};
+  for (const s of allStoreIds) {
+    const idx = Number(priceIndex[`${s}_idx`]);
+    const cnt = Number(priceIndex[`${s}_count`]);
+    if (idx > 0 && cnt > 0) storeIndex[s] = { index: idx, count: cnt };
+  }
+  const totalProducts = Number(priceIndex.total_products);
 
   return NextResponse.json(numify({
     overview,
@@ -246,7 +254,8 @@ export async function GET() {
     storeCounts,
     threeStoreProducts,
     purchasingPower,
-    allThreeBasket,
+    storeIndex,
+    totalProducts,
   }));
   } catch (e: unknown) {
     console.error("[report] Error:", e);

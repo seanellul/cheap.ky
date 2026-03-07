@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Cheap.ky -- Cayman Islands Grocery Price Comparison",
     description:
-      "The only independent grocery price comparison tool for the Cayman Islands. Tracking 48,000+ products across 5 stores daily.",
+      "The only independent grocery price comparison tool for the Cayman Islands. Tracking 48,000+ products across all major stores daily.",
     type: "website",
   },
   alternates: {
@@ -72,7 +72,7 @@ export default function AboutPage() {
         priceCurrency: "KYD",
       },
       featureList: [
-        "Real-time grocery price comparison across 5 Cayman stores",
+        "Real-time grocery price comparison across Cayman's grocery stores",
         "48,000+ products tracked daily",
         "Smart cart builder to find cheapest store",
         "Price history and trend tracking",
@@ -144,7 +144,7 @@ export default function AboutPage() {
               <p>
                 Cheap.ky is a free grocery price comparison tool built
                 specifically for the Cayman Islands. We track real-time prices
-                across all 5 major supermarkets in Grand Cayman --
+                across all major supermarkets in Grand Cayman --
                 Foster&apos;s Food Fair, Hurley&apos;s Marketplace, Cost-U-Less,
                 Priced Right, and Shopright -- so you can find the lowest price
                 for any product instantly.
@@ -279,7 +279,7 @@ export default function AboutPage() {
                   <a href="https://cheap.ky">
                     <strong>Search &amp; compare</strong>
                   </a>{" "}
-                  -- Search for any product and see prices at all 5 stores
+                  -- Search for any product and see prices at every store
                   side-by-side
                 </li>
                 <li>
@@ -328,7 +328,7 @@ export default function AboutPage() {
             <section id="how-it-works">
               <h2>How It Works</h2>
               <p>
-                Cheap.ky collects product data from all 5 Cayman grocery stores
+                Cheap.ky collects product data from all major Cayman grocery stores
                 daily. We use a combination of UPC barcode matching and
                 AI-powered fuzzy matching to identify the same product across
                 different stores, even when names and packaging differ. This

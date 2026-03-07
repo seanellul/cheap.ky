@@ -9,6 +9,7 @@ import { HeaderCartBadge } from "@/components/header-cart-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
 import { NavLink } from "@/components/nav-link";
+import { MobileMenu } from "@/components/mobile-menu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -152,7 +153,7 @@ export default function RootLayout({
               </a>
               {/* Mobile header actions */}
               <div className="flex items-center gap-1 md:hidden">
-                <ThemeToggle />
+                <MobileMenu />
               </div>
               <nav className="hidden md:flex items-center gap-1 text-sm">
                 <NavLink href="/">Search</NavLink>

@@ -47,6 +47,7 @@ data/*.db-shm
 
 # screenshots
 *.png
+!public/icons/*.png
 
 # playwright mcp
 .playwright-mcp/

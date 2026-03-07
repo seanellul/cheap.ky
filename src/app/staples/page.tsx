@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Fragment, Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ShoppingCart, Check, Minus } from "lucide-react";
+import { ShoppingCart, Check, Minus, ChevronDown } from "lucide-react";
 import { ProductImage } from "@/components/product-image";
 import { formatKYD } from "@/lib/utils/currency";
 import { StoreBadge } from "@/components/store-badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/contexts/cart-context";
+import { StapleDetailPanel } from "@/components/staple-detail-panel";
 
 interface StaplePrice {
   productId: number;
@@ -66,6 +67,7 @@ function StaplesPage() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const { refreshCart } = useCart();
 
   useEffect(() => {
@@ -176,7 +178,7 @@ function StaplesPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold sm:text-2xl lg:text-3xl">Everyday Staples</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Compare everyday items across stores.{isAdmin && " Click a price to change the matched product."}
+          Compare everyday items across stores. Tap any row for details.{isAdmin && " Click a price to change the matched product."}
         </p>
       </div>
 
@@ -281,109 +283,139 @@ function StaplesPage() {
               <tbody>
                 {items.map((staple) => {
                   const cheapest = getCheapestStore(staple);
+                  const isExpanded = expandedId === staple.id;
                   return (
-                    <tr key={staple.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2.5">
-                          <ProductImage src={getStapleImage(staple)} alt={staple.name} size="sm" />
-                          <span className="font-medium">{staple.name}</span>
-                        </div>
-                      </td>
-                      {STORES.map((store) => {
-                        const p = staple.prices[store.id];
-                        const isCheapest = cheapest === store.id;
-                        const effectivePrice = p
-                          ? p.salePrice ?? p.price
-                          : null;
+                    <Fragment key={staple.id}>
+                      <tr
+                        className={`border-b transition-colors cursor-pointer ${
+                          isExpanded ? "bg-muted/60" : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => setExpandedId(isExpanded ? null : staple.id)}
+                      >
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2.5">
+                            <ProductImage src={getStapleImage(staple)} alt={staple.name} size="sm" />
+                            <span className="font-medium">{staple.name}</span>
+                            <ChevronDown
+                              className={`h-3.5 w-3.5 text-muted-foreground/50 transition-transform shrink-0 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+                        </td>
+                        {STORES.map((store) => {
+                          const p = staple.prices[store.id];
+                          const isCheapest = cheapest === store.id;
+                          const effectivePrice = p
+                            ? p.salePrice ?? p.price
+                            : null;
 
-                        return (
-                          <td key={store.id} className="py-3 px-3">
-                            {p ? (
-                              <div
-                                onClick={isAdmin ? () =>
-                                  setEditing({
-                                    stapleId: staple.id,
-                                    storeId: store.id,
-                                    stapleName: staple.name,
-                                  }) : undefined
-                                }
-                                className={`text-left w-full rounded-lg p-2 -m-2 transition-colors ${
-                                  isAdmin ? "cursor-pointer hover:bg-muted" : ""
-                                } ${
-                                  isCheapest
-                                    ? "bg-savings/10 ring-1 ring-savings/30"
-                                    : ""
-                                }`}
-                              >
+                          return (
+                            <td key={store.id} className="py-3 px-3">
+                              {p ? (
                                 <div
-                                  className={`font-semibold tabular-nums ${
+                                  onClick={isAdmin ? (e) => {
+                                    e.stopPropagation();
+                                    setEditing({
+                                      stapleId: staple.id,
+                                      storeId: store.id,
+                                      stapleName: staple.name,
+                                    });
+                                  } : undefined
+                                  }
+                                  className={`text-left w-full rounded-lg p-2 -m-2 transition-colors ${
+                                    isAdmin ? "cursor-pointer hover:bg-muted" : ""
+                                  } ${
                                     isCheapest
-                                      ? "text-savings"
-                                      : "text-foreground"
+                                      ? "bg-savings/10 ring-1 ring-savings/30"
+                                      : ""
                                   }`}
                                 >
-                                  {effectivePrice !== null
-                                    ? formatKYD(effectivePrice)
-                                    : "--"}
-                                  {p.salePrice !== null &&
-                                    p.price !== null &&
-                                    p.salePrice < p.price && (
-                                      <span className="ml-1 text-xs text-destructive line-through">
-                                        {formatKYD(p.price)}
-                                      </span>
-                                    )}
-                                </div>
-                                <div className="text-xs text-muted-foreground truncate max-w-[180px]">
-                                  {p.productName}
-                                </div>
-                                {p.size && (
-                                  <div className="text-xs text-muted-foreground/70">
-                                    {p.size}
+                                  <div
+                                    className={`font-semibold tabular-nums ${
+                                      isCheapest
+                                        ? "text-savings"
+                                        : "text-foreground"
+                                    }`}
+                                  >
+                                    {effectivePrice !== null
+                                      ? formatKYD(effectivePrice)
+                                      : "--"}
+                                    {p.salePrice !== null &&
+                                      p.price !== null &&
+                                      p.salePrice < p.price && (
+                                        <span className="ml-1 text-xs text-destructive line-through">
+                                          {formatKYD(p.price)}
+                                        </span>
+                                      )}
                                   </div>
-                                )}
-                                {isAdmin && p.autoMatched && (
-                                  <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
-                                    auto-matched
+                                  <div className="text-xs text-muted-foreground truncate max-w-[180px]">
+                                    {p.productName}
                                   </div>
-                                )}
-                              </div>
-                            ) : isAdmin ? (
-                              <button
-                                onClick={() =>
-                                  setEditing({
-                                    stapleId: staple.id,
-                                    storeId: store.id,
-                                    stapleName: staple.name,
-                                  })
-                                }
-                                className="text-muted-foreground/50 hover:text-primary text-xs hover:underline"
-                              >
-                                + Link product
-                              </button>
+                                  {p.size && (
+                                    <div className="text-xs text-muted-foreground/70">
+                                      {p.size}
+                                    </div>
+                                  )}
+                                  {isAdmin && p.autoMatched && (
+                                    <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                      auto-matched
+                                    </div>
+                                  )}
+                                </div>
+                              ) : isAdmin ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditing({
+                                      stapleId: staple.id,
+                                      storeId: store.id,
+                                      stapleName: staple.name,
+                                    });
+                                  }}
+                                  className="text-muted-foreground/50 hover:text-primary text-xs hover:underline"
+                                >
+                                  + Link product
+                                </button>
+                              ) : (
+                                <span className="text-muted-foreground/30">
+                                  <Minus className="h-4 w-4" />
+                                </span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="py-3 px-2 text-center">
+                          <Button
+                            variant={addedIds.has(staple.id) ? "default" : "outline"}
+                            size="icon-sm"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(staple.id);
+                            }}
+                            disabled={addedIds.has(staple.id)}
+                          >
+                            {addedIds.has(staple.id) ? (
+                              <Check className="h-4 w-4" />
                             ) : (
-                              <span className="text-muted-foreground/30">
-                                <Minus className="h-4 w-4" />
-                              </span>
+                              <ShoppingCart className="h-3.5 w-3.5" />
                             )}
+                          </Button>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={STORES.length + 2} className="border-b bg-muted/30">
+                            <StapleDetailPanel
+                              name={staple.name}
+                              prices={staple.prices}
+                              stores={STORES}
+                            />
                           </td>
-                        );
-                      })}
-                      <td className="py-3 px-2 text-center">
-                        <Button
-                          variant={addedIds.has(staple.id) ? "default" : "outline"}
-                          size="icon-sm"
-                          className="h-8 w-8"
-                          onClick={() => addToCart(staple.id)}
-                          disabled={addedIds.has(staple.id)}
-                        >
-                          {addedIds.has(staple.id) ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </td>
-                    </tr>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>

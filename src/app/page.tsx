@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, TrendingUp, Sparkles, ShoppingBasket } from "lucide-react";
+import { useState } from "react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/search-bar";
+import { SearchBubbles } from "@/components/search-bubbles";
 import { ProductCard } from "@/components/product-card";
 import {
   PriceComparisonRow,
@@ -15,7 +16,6 @@ import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { BrandLogo } from "@/components/brand-logo";
 import { FreshnessBadge } from "@/components/freshness-badge";
 import { useCart } from "@/lib/contexts/cart-context";
-import { formatKYD } from "@/lib/utils/currency";
 
 interface SearchResult {
   id: number;
@@ -28,27 +28,13 @@ interface SearchResult {
   prices: Record<string, { price: number | null; salePrice: number | null; name: string }>;
 }
 
-interface Suggestions {
-  categories: string[];
-  trending: string[];
-  staples: string[];
-}
-
 export default function HomePage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
   const { refreshCart } = useCart();
-
-  useEffect(() => {
-    fetch("/api/search/suggestions")
-      .then((r) => r.json())
-      .then(setSuggestions)
-      .catch(() => {});
-  }, []);
 
   async function handleAddToCart(productId: number) {
     await fetch("/api/cart", {
@@ -69,11 +55,11 @@ export default function HomePage() {
     setHasSearched(true);
   }
 
-  function handleSuggestionClick(term: string) {
+  function handleBubbleSelect(term: string) {
     (window as any).__setSearchQuery?.(term);
   }
 
-  const showSuggestions = !hasSearched && !loading && query.length < 2 && suggestions;
+  const showBubbles = !loading && query.length < 2 && results.length === 0;
 
   return (
     <div className="space-y-6">
@@ -101,69 +87,13 @@ export default function HomePage() {
         onQueryChange={setQuery}
       />
 
-      {/* Suggestions — show before any search */}
-      {showSuggestions && (
-        <div className="space-y-5 animate-in fade-in duration-300">
-          {/* Quick staples */}
-          <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <ShoppingBasket className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Popular searches</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {suggestions.staples.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => handleSuggestionClick(term)}
-                  className="rounded-full border bg-card px-3 py-1.5 text-sm hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors capitalize"
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Trending — biggest price gaps */}
-          {suggestions.trending.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2.5">
-                <TrendingUp className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium">Biggest price differences</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {suggestions.trending.map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => handleSuggestionClick(term)}
-                    className="rounded-full border border-accent/20 bg-accent/5 px-3 py-1.5 text-sm hover:bg-accent/15 hover:border-accent/40 transition-colors"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Categories */}
-          {suggestions.categories.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2.5">
-                <Sparkles className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Browse by category</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {suggestions.categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => handleSuggestionClick(cat)}
-                    className="rounded-full border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Animated search bubbles — the landing experience */}
+      {showBubbles && (
+        <div className="pt-2">
+          <p className="text-center text-sm text-muted-foreground mb-1">
+            Tap to search
+          </p>
+          <SearchBubbles onSelect={handleBubbleSelect} />
         </div>
       )}
 
@@ -228,8 +158,8 @@ export default function HomePage() {
         </>
       )}
 
-      {/* Empty state */}
-      {!loading && hasSearched && results.length === 0 && (
+      {/* Empty state — only after a real search with no results */}
+      {!loading && hasSearched && query.length >= 2 && results.length === 0 && (
         <EmptyState
           icon={Search}
           title="No products found"

@@ -209,3 +209,14 @@ export const stapleProducts = pgTable(
     uniqueIndex("staple_store_idx").on(table.stapleId, table.storeId),
   ]
 );
+
+// Email subscribers for weekly price drop digest
+export const emailSubscribers = pgTable("email_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  unsubscribeToken: text("unsubscribe_token").notNull(),
+  verified: boolean("verified").default(true),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});

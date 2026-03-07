@@ -1,18 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
 import { getPriceChanges } from "@/lib/db/price-changes";
+import { toSlug } from "@/lib/utils/slug";
+
+function simplifyCategory(raw: string): string {
+  const parts = raw.split(" / ");
+  return parts.length > 2 ? parts.slice(2).join(" / ") : parts[parts.length - 1];
+}
+
+async function resolveCategoryRaws(slug: string): Promise<string[]> {
+  const allCats = await rawSql(
+    `SELECT DISTINCT category_raw FROM store_products WHERE category_raw IS NOT NULL`
+  );
+  return allCats
+    .filter((c) => toSlug(simplifyCategory(String(c.category_raw))) === slug)
+    .map((c) => String(c.category_raw));
+}
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
   const sort = req.nextUrl.searchParams.get("sort") || "relevance";
+  const category = req.nextUrl.searchParams.get("category") || "";
 
-  if (q.length < 2) {
+  let categoryRaws: string[] = [];
+  if (category) {
+    categoryRaws = await resolveCategoryRaws(category);
+    if (categoryRaws.length === 0) {
+      return NextResponse.json({ results: [] });
+    }
+  }
+
+  if (q.length < 2 && !category) {
     return NextResponse.json({ results: [] });
   }
 
   const searchTerm = `%${q}%`;
 
-  // Single efficient query: get matched products with all store prices
+  // Build dynamic category filter
+  let catClause = "";
+  const matchedParams: (string | number)[] = [searchTerm, sort];
+  const unmatchedParams: (string | number)[] = [searchTerm, sort];
+  if (categoryRaws.length > 0) {
+    const placeholders = categoryRaws.map((_, i) => `$${i + 3}`).join(",");
+    catClause = `AND sp.category_raw IN (${placeholders})`;
+    matchedParams.push(...categoryRaws);
+    unmatchedParams.push(...categoryRaws);
+  }
+  const searchClauseMatched = q.length >= 2
+    ? `AND (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)`
+    : "";
+  const searchClauseUnmatched = q.length >= 2
+    ? `AND (sp.name ILIKE $1 OR sp.brand ILIKE $1)`
+    : "";
+
   const matched = await rawSql(
     `SELECT
        p.id,
@@ -32,8 +72,9 @@ export async function GET(req: NextRequest) {
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
      JOIN store_products sp ON pm.store_product_id = sp.id
-     WHERE (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)
-       AND sp.price IS NOT NULL
+     WHERE sp.price IS NOT NULL
+       ${searchClauseMatched}
+       ${catClause}
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      ORDER BY
        CASE WHEN $2 = 'price_asc' THEN MIN(COALESCE(sp.sale_price, sp.price)) END ASC NULLS LAST,
@@ -43,10 +84,9 @@ export async function GET(req: NextRequest) {
        COUNT(DISTINCT sp.store_id) DESC,
        p.canonical_name ASC
      LIMIT 50`,
-    [searchTerm, sort]
+    matchedParams
   );
 
-  // Also find unmatched store products (single-store items)
   const unmatched = await rawSql(
     `SELECT
        sp.id,
@@ -59,8 +99,9 @@ export async function GET(req: NextRequest) {
        sp.sale_price,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
-     WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
-       AND sp.price IS NOT NULL
+     WHERE sp.price IS NOT NULL
+       ${searchClauseUnmatched}
+       ${catClause}
        AND NOT EXISTS (
          SELECT 1 FROM product_matches pm WHERE pm.store_product_id = sp.id
        )
@@ -69,7 +110,7 @@ export async function GET(req: NextRequest) {
        CASE WHEN $2 = 'price_desc' THEN COALESCE(sp.sale_price, sp.price) END DESC NULLS LAST,
        sp.name ASC
      LIMIT 30`,
-    [searchTerm, sort]
+    unmatchedParams
   );
 
   const results = [];
@@ -78,7 +119,6 @@ export async function GET(req: NextRequest) {
   // Track spId -> storeId mapping per result index
   const resultSpIds: Array<Record<string, number>> = [];
 
-  // Process matched products
   for (const row of matched) {
     const storePricesArr = row.store_prices as Array<{
       sp_id: number;
@@ -116,7 +156,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Process unmatched store products
   for (const sp of unmatched) {
     const spId = Number(sp.id);
     const storeId = String(sp.store_id);

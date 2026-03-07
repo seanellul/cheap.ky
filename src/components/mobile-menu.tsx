@@ -14,7 +14,6 @@ import {
   BookOpen,
   Compass,
   Activity,
-  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
@@ -38,12 +37,6 @@ const MENU_SECTIONS = [
       { href: "/guides/grocery-prices-cayman-islands-2026", icon: Compass, label: "Guides" },
       { href: "/report", icon: BarChart3, label: "Price Report" },
       { href: "/analytics", icon: Activity, label: "Analytics" },
-    ],
-  },
-  {
-    label: "Admin",
-    items: [
-      { href: "/admin/ingest", icon: Settings, label: "Admin" },
     ],
   },
 ];

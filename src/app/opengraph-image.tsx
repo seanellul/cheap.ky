@@ -16,122 +16,63 @@ export default async function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0d4f52 0%, #1a7a7e 40%, #237e82 60%, #1a6a6d 100%)",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-          position: "relative",
+          background: "linear-gradient(135deg, #0d4f52 0%, #1a7a7e 50%, #1a6a6d 100%)",
+          fontFamily: "sans-serif",
         }}
       >
-        {/* Subtle pattern overlay */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.06,
-            background: "radial-gradient(circle at 20% 80%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-
-        {/* Logo icon */}
+        {/* Logo: white rounded square with C and gold dot */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 96,
-            height: 96,
-            borderRadius: 22,
-            background: "rgba(255,255,255,0.15)",
-            marginBottom: 32,
-            backdropFilter: "blur(10px)",
+            width: 88,
+            height: 88,
+            borderRadius: 20,
+            background: "white",
+            marginBottom: 28,
           }}
         >
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 32 32"
-          >
-            <rect width="32" height="32" rx="7" fill="white" />
-            <text
-              x="3.5"
-              y="25"
-              fontFamily="system-ui,-apple-system,sans-serif"
-              fontWeight="800"
-              fontSize="26"
-              fill="#1a7a7e"
-              letterSpacing="-1"
-            >
-              C
-            </text>
-            <circle cx="25" cy="21.5" r="3.5" fill="#c89b2f" />
-          </svg>
+          <div style={{ display: "flex", alignItems: "baseline" }}>
+            <span style={{ fontSize: 58, fontWeight: 800, color: "#1a7a7e", lineHeight: 1 }}>C</span>
+            <span style={{ fontSize: 48, fontWeight: 800, color: "#c89b2f", lineHeight: 1, marginLeft: -2 }}>.</span>
+          </div>
         </div>
 
         {/* Brand name */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            fontSize: 72,
-            fontWeight: 800,
-            letterSpacing: "-2px",
-            lineHeight: 1,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "baseline", fontSize: 68, fontWeight: 800, lineHeight: 1 }}>
           <span style={{ color: "white" }}>Cheap</span>
-          <span style={{ color: "#c89b2f", fontSize: 80, lineHeight: 1 }}>.</span>
+          <span style={{ color: "#c89b2f", fontSize: 76 }}>.</span>
           <span style={{ color: "white" }}>ky</span>
         </div>
 
         {/* Tagline */}
-        <div
-          style={{
-            fontSize: 30,
-            fontWeight: 600,
-            color: "rgba(255,255,255,0.9)",
-            marginTop: 16,
-            letterSpacing: "-0.3px",
-          }}
-        >
+        <div style={{ fontSize: 28, fontWeight: 600, color: "rgba(255,255,255,0.9)", marginTop: 16 }}>
           Shop Smart, Shop Cheap
         </div>
 
         {/* Description */}
-        <div
-          style={{
-            fontSize: 22,
-            color: "rgba(255,255,255,0.6)",
-            marginTop: 12,
-          }}
-        >
+        <div style={{ fontSize: 20, color: "rgba(255,255,255,0.6)", marginTop: 10 }}>
           Save up to 75% across 35k Cayman grocery products
         </div>
 
         {/* Store badges */}
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            marginTop: 40,
-          }}
-        >
-          {["Foster's", "Hurley's", "Cost-U-Less", "Priced Right", "Shopright"].map(
-            (store) => (
-              <div
-                key={store}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.8)",
-                  fontSize: 16,
-                  fontWeight: 600,
-                }}
-              >
-                {store}
-              </div>
-            )
-          )}
+        <div style={{ display: "flex", gap: 10, marginTop: 36 }}>
+          {["Foster's", "Hurley's", "Cost-U-Less"].map((store) => (
+            <div
+              key={store}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.15)",
+                color: "rgba(255,255,255,0.85)",
+                fontSize: 16,
+                fontWeight: 600,
+              }}
+            >
+              {store}
+            </div>
+          ))}
         </div>
       </div>
     ),

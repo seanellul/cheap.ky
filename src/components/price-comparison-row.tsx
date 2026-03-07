@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { SaleBadge } from "@/components/sale-badge";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -24,7 +25,7 @@ interface PriceComparisonRowProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; isPromo?: boolean }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
@@ -86,6 +87,7 @@ export function PriceComparisonRow({
         return (
           <td key={storeId} className="py-3 px-2 text-center text-sm">
             <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+            {p?.isPromo && <SaleBadge className="mt-0.5" />}
           </td>
         );
       })}

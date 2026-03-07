@@ -31,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/20 backdrop-blur-xs duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -53,25 +53,37 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-background p-4 text-sm ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // Desktop: centered modal
+          "fixed z-50 grid w-full gap-4 bg-background text-sm ring-1 ring-foreground/10 outline-none",
+          // Mobile: bottom sheet
+          "bottom-0 left-0 right-0 max-h-[90vh] rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]",
+          "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          // Mobile: slide up from bottom
+          "data-open:slide-in-from-bottom-full data-closed:slide-out-to-bottom-full duration-200",
+          // Desktop: centered dialog
+          "sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:right-auto sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-4 sm:pb-4",
+          "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:zoom-out-95",
           className
         )}
         {...props}
       >
-        {children}
+        {/* Mobile drag handle */}
+        <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 -mt-1 mb-1 sm:hidden" />
+        <div className="overflow-y-auto max-h-[calc(90vh-4rem)] sm:max-h-none overscroll-contain">
+          {children}
+        </div>
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-3 right-3 sm:top-2 sm:right-2"
                 size="icon-sm"
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -103,6 +115,7 @@ function DialogFooter({
       data-slot="dialog-footer"
       className={cn(
         "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        "sm:-mb-4 -mb-[calc(1rem+env(safe-area-inset-bottom))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4",
         className
       )}
       {...props}
@@ -121,7 +134,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-base leading-none font-medium", className)}
+      className={cn("text-base leading-none font-semibold", className)}
       {...props}
     />
   )

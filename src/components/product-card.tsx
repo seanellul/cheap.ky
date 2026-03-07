@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
 
@@ -27,17 +28,28 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
 
   let cheapestStore: string | null = null;
   let cheapestPrice = Infinity;
+  let expensivePrice = 0;
+  let storeCount = 0;
   for (const storeId of STORE_IDS) {
     const p = prices[storeId];
     if (!p) continue;
     const effective = p.salePrice ?? p.price;
-    if (effective != null && effective < cheapestPrice) {
-      cheapestPrice = effective;
-      cheapestStore = storeId;
+    if (effective != null) {
+      storeCount++;
+      if (effective < cheapestPrice) {
+        cheapestPrice = effective;
+        cheapestStore = storeId;
+      }
+      if (effective > expensivePrice) {
+        expensivePrice = effective;
+      }
     }
   }
 
-  function handleAdd() {
+  const savings = storeCount >= 2 ? expensivePrice - cheapestPrice : 0;
+
+  function handleAdd(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!onAddToCart || id <= 0) return;
     onAddToCart(id);
     setAdded(true);
@@ -46,26 +58,31 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
 
   return (
     <div
-      className="flex items-start gap-3 rounded-xl border bg-card p-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
+      className="group relative flex items-start gap-3 rounded-2xl border bg-card p-3 transition-all duration-200 active:scale-[0.98]"
       style={style}
+      onClick={() => id > 0 && onClickProduct?.(id)}
     >
-      <button
-        type="button"
-        className="shrink-0"
-        onClick={() => id > 0 && onClickProduct?.(id)}
-        disabled={id <= 0 || !onClickProduct}
-      >
+      {/* Product image */}
+      <div className="shrink-0 relative">
         <ProductImage src={imageUrl} alt={name} size="lg" />
-      </button>
-      <div
-        className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => id > 0 && onClickProduct?.(id)}
-      >
-        <div className="font-medium text-sm leading-tight line-clamp-2">{name}</div>
-        <div className="text-xs text-muted-foreground mt-0.5">
-          {[brand, size].filter(Boolean).join(" - ")}
-        </div>
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        {savings > 0.01 && (
+          <span className="absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-savings text-white text-[9px] font-bold px-1.5 py-0.5 leading-none shadow-sm">
+            −{formatKYD(savings)}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm leading-snug line-clamp-2">{name}</div>
+        {(brand || size) && (
+          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+            {[brand, size].filter(Boolean).join(" · ")}
+          </div>
+        )}
+
+        {/* Store prices */}
+        <div className="flex flex-wrap gap-1 mt-2">
           {STORE_IDS.map((storeId) => {
             const p = prices[storeId];
             const effective = p?.salePrice ?? p?.price;
@@ -74,8 +91,8 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
             return (
               <div
                 key={storeId}
-                className={`flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs ${
-                  isCheapest ? "bg-savings/10 ring-1 ring-savings/30" : "bg-muted"
+                className={`flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs transition-colors ${
+                  isCheapest ? "bg-savings/10 ring-1 ring-savings/30" : "bg-muted/80"
                 }`}
               >
                 <StoreBadge storeId={storeId} size="sm" />
@@ -85,14 +102,20 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
           })}
         </div>
       </div>
+
+      {/* Add to cart button */}
       {id > 0 && onAddToCart && (
         <Button
           size="icon-sm"
           variant={added ? "secondary" : "outline"}
           onClick={handleAdd}
-          className="shrink-0 mt-1 transition-all duration-200"
+          className={`shrink-0 mt-1 transition-all duration-200 ${added ? "bg-savings/10 border-savings/30" : ""}`}
         >
-          {added ? <Check className="h-3.5 w-3.5 text-savings" /> : <ShoppingCart className="h-3.5 w-3.5" />}
+          {added ? (
+            <Check className="h-3.5 w-3.5 text-savings animate-check-pop" />
+          ) : (
+            <ShoppingCart className="h-3.5 w-3.5" />
+          )}
         </Button>
       )}
     </div>

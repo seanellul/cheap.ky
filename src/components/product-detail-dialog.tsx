@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, ExternalLink, ShoppingCart, Check } from "lucide-react";
+import { Loader2, ShoppingCart, Check, TrendingDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -91,20 +91,21 @@ export function ProductDetailDialog({ productId, onClose, onAddToCart }: Product
 
   return (
     <Dialog open={productId !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Loading prices...</span>
           </div>
         )}
         {data && (
-          <>
+          <div className="space-y-4">
             <DialogHeader>
               <div className="flex items-start gap-3">
                 <ProductImage src={data.product.imageUrl} alt={data.product.name} size="lg" />
                 <div className="min-w-0 flex-1">
                   <DialogTitle className="text-base leading-tight">{data.product.name}</DialogTitle>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  <div className="flex flex-wrap gap-1.5 mt-2">
                     {data.product.brand && <Badge variant="secondary">{data.product.brand}</Badge>}
                     {data.product.size && <Badge variant="outline">{data.product.size}</Badge>}
                     {data.product.upc && (
@@ -116,64 +117,73 @@ export function ProductDetailDialog({ productId, onClose, onAddToCart }: Product
             </DialogHeader>
 
             {/* Price comparison */}
-            <div className="space-y-2 mt-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Store Prices</h3>
-              {data.storeMatches.map((m) => {
-                const isCheapest = m.storeId === cheapestStore;
-                return (
-                  <div
-                    key={m.storeId}
-                    className={`flex items-center gap-3 rounded-lg p-3 transition-colors ${
-                      isCheapest ? "bg-savings/10 ring-1 ring-savings/30" : "bg-muted/50"
-                    }`}
-                  >
-                    <ProductImage src={m.imageUrl} alt={m.name} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <StoreBadge storeId={m.storeId} />
-                        {isCheapest && (
-                          <span className="text-[10px] font-medium text-savings">BEST PRICE</span>
-                        )}
+            <div className="space-y-1.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Store Prices</h3>
+              <div className="stagger-children space-y-1.5">
+                {data.storeMatches.map((m) => {
+                  const isCheapest = m.storeId === cheapestStore;
+                  return (
+                    <div
+                      key={m.storeId}
+                      className={`flex items-center gap-3 rounded-xl p-3 transition-all duration-200 ${
+                        isCheapest
+                          ? "bg-savings/8 ring-1 ring-savings/25"
+                          : "bg-muted/40"
+                      }`}
+                    >
+                      <ProductImage src={m.imageUrl} alt={m.name} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <StoreBadge storeId={m.storeId} />
+                          {isCheapest && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-savings">
+                              <TrendingDown className="h-2.5 w-2.5" />
+                              BEST
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{m.name}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate mt-0.5">{m.name}</div>
-                      {m.size && (
-                        <div className="text-[10px] text-muted-foreground/70">{m.size}</div>
-                      )}
+                      <div className="text-right shrink-0">
+                        <PriceDisplay price={m.price} salePrice={m.salePrice} isCheapest={isCheapest} />
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <PriceDisplay price={m.price} salePrice={m.salePrice} isCheapest={isCheapest} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Savings callout */}
             {data.storeMatches.length >= 2 && cheapestPrice < Infinity && (
-              <div className="text-center text-sm text-muted-foreground">
-                {(() => {
-                  const prices = data.storeMatches
-                    .map((m) => m.salePrice ?? m.price)
-                    .filter((p): p is number => p != null);
-                  const max = Math.max(...prices);
-                  const savings = max - cheapestPrice;
-                  if (savings <= 0) return null;
-                  return (
-                    <span>
-                      Save up to <span className="font-bold text-savings">{formatKYD(savings)}</span> by shopping at{" "}
+              (() => {
+                const prices = data.storeMatches
+                  .map((m) => m.salePrice ?? m.price)
+                  .filter((p): p is number => p != null);
+                const max = Math.max(...prices);
+                const savings = max - cheapestPrice;
+                if (savings <= 0) return null;
+                return (
+                  <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-savings/8 text-sm">
+                    <TrendingDown className="h-4 w-4 text-savings" />
+                    <span className="text-muted-foreground">
+                      Save up to <span className="font-bold text-savings">{formatKYD(savings)}</span> at{" "}
                       <StoreBadge storeId={cheapestStore!} size="sm" />
                     </span>
-                  );
-                })()}
-              </div>
+                  </div>
+                );
+              })()
             )}
 
             {/* Add to cart */}
             {onAddToCart && productId && productId > 0 && (
-              <Button onClick={handleAdd} className="w-full" disabled={added}>
+              <Button
+                onClick={handleAdd}
+                className="w-full h-11 text-sm font-semibold rounded-xl"
+                disabled={added}
+              >
                 {added ? (
                   <>
-                    <Check className="h-4 w-4 mr-1.5" />
+                    <Check className="h-4 w-4 mr-1.5 animate-check-pop" />
                     Added to Cart
                   </>
                 ) : (
@@ -184,7 +194,7 @@ export function ProductDetailDialog({ productId, onClose, onAddToCart }: Product
                 )}
               </Button>
             )}
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>

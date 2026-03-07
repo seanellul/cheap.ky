@@ -62,17 +62,17 @@ export default function HomePage() {
   const showBubbles = !loading && query.length < 2 && results.length === 0;
 
   return (
-    <div className="space-y-6">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-6 py-8 md:py-12">
+    <div className="space-y-5">
+      {/* Hero — compact on mobile, spacious on desktop */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-5 py-6 md:py-12 md:px-6">
         <div className="relative">
           <h1>
             <BrandLogo size="lg" />
           </h1>
-          <p className="text-muted-foreground text-sm mt-2 sm:text-base">
+          <p className="text-muted-foreground text-sm mt-1.5 sm:text-base">
             Don&apos;t just shop &mdash; be <span className="font-semibold text-foreground">Cheap.ky</span>
           </p>
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-3 mt-1">
             <p className="text-muted-foreground/70 text-xs sm:text-sm">
               Compare prices across Cayman grocery stores
             </p>
@@ -89,8 +89,8 @@ export default function HomePage() {
 
       {/* Animated search bubbles — the landing experience */}
       {showBubbles && (
-        <div className="pt-2">
-          <p className="text-center text-sm text-muted-foreground mb-1">
+        <div className="pt-1 animate-slide-up-fade">
+          <p className="text-center text-xs text-muted-foreground mb-1.5">
             Tap to search
           </p>
           <SearchBubbles onSelect={handleBubbleSelect} />
@@ -102,11 +102,11 @@ export default function HomePage() {
 
       {/* Results summary */}
       {!loading && results.length > 0 && (
-        <div className="text-sm text-muted-foreground px-1">
-          {results.length} result{results.length === 1 ? "" : "s"} found
+        <div className="text-xs text-muted-foreground px-1 animate-slide-up-fade">
+          <span className="font-medium text-foreground">{results.length}</span> result{results.length === 1 ? "" : "s"}
           {results.filter((r) => r.storeCount > 1).length > 0 && (
             <span>
-              {" "}&middot; {results.filter((r) => r.storeCount > 1).length} compared across stores
+              {" "}· {results.filter((r) => r.storeCount > 1).length} compared across stores
             </span>
           )}
         </div>
@@ -115,8 +115,8 @@ export default function HomePage() {
       {/* Results - Mobile cards */}
       {!loading && results.length > 0 && (
         <>
-          <div className="md:hidden space-y-2">
-            {results.map((r, i) => (
+          <div className="md:hidden space-y-2 stagger-children">
+            {results.map((r) => (
               <ProductCard
                 key={r.id}
                 id={r.id}
@@ -128,7 +128,6 @@ export default function HomePage() {
                 minPrice={r.minPrice}
                 onAddToCart={handleAddToCart}
                 onClickProduct={setSelectedProductId}
-                style={{ animationDelay: `${i * 50}ms` }}
               />
             ))}
           </div>

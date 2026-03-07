@@ -145,11 +145,15 @@ export default function RootLayout({
       >
         <ThemeProvider>
         <CartProvider>
-          <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-sm">
-            <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-3">
-              <a href="/" className="flex items-center gap-2">
+          <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-xl backdrop-saturate-150">
+            <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-2.5 md:py-3">
+              <a href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
                 <BrandLogo showIcon />
               </a>
+              {/* Mobile header actions */}
+              <div className="flex items-center gap-1 md:hidden">
+                <ThemeToggle />
+              </div>
               <nav className="hidden md:flex items-center gap-1 text-sm">
                 <NavLink href="/">Search</NavLink>
                 <NavLink href="/compare">Compare</NavLink>
@@ -165,7 +169,7 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:pb-6">
+          <main className="mx-auto max-w-6xl px-4 py-4 pb-24 md:py-6 md:pb-6">
             {children}
           </main>
           <AppBanner />

@@ -37,15 +37,17 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
 
   return (
     <div
-      className="rounded-xl border bg-card p-3 space-y-2 cursor-pointer hover:bg-muted/30 transition-colors"
+      className="rounded-2xl border bg-card p-3 space-y-2 cursor-pointer transition-all duration-200 active:scale-[0.98] hover:bg-muted/30"
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
-        <ProductImage src={imageUrl} alt={name} size="md" />
+        <div className="shrink-0 relative">
+          <ProductImage src={imageUrl} alt={name} size="md" />
+        </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm leading-tight line-clamp-2">{name}</div>
+          <div className="font-semibold text-sm leading-snug line-clamp-2">{name}</div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {[brand, size].filter(Boolean).join(" - ")}
+            {[brand, size].filter(Boolean).join(" · ")}
           </div>
         </div>
         {savings > 0 && (
@@ -59,7 +61,7 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
           </div>
         )}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {STORE_IDS.map((storeId) => {
           const p = prices[storeId];
           const effective = p?.salePrice ?? p?.price;
@@ -68,8 +70,8 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
           return (
             <div
               key={storeId}
-              className={`flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs ${
-                isCheapest ? "bg-savings/10 ring-1 ring-savings/30" : "bg-muted"
+              className={`flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs transition-colors ${
+                isCheapest ? "bg-savings/10 ring-1 ring-savings/30" : "bg-muted/80"
               }`}
             >
               <StoreBadge storeId={storeId} size="sm" />

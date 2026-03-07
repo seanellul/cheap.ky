@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy } from "lucide-react";
+import { Trophy, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StoreBadge } from "@/components/store-badge";
 import { formatKYD } from "@/lib/utils/currency";
@@ -47,23 +47,23 @@ export function CartSummary({ items, storeIds }: CartSummaryProps) {
     <div
       ref={ref}
       className={cn(
-        "grid gap-4 md:grid-cols-2 transition-all duration-500",
+        "grid gap-3 md:grid-cols-2 transition-all duration-500",
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
     >
-      <Card>
+      <Card className="rounded-2xl">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Best Single Store</CardTitle>
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Best Single Store</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2.5">
           {singleStoreResults.slice(0, 4).map((store, i) => (
-            <div key={store.storeId} className="space-y-1">
+            <div key={store.storeId} className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   {i === 0 && <Trophy className="h-3.5 w-3.5 text-savings" />}
                   <StoreBadge storeId={store.storeId} />
                   {store.missingCount > 0 && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] text-muted-foreground">
                       ({store.missingCount} missing)
                     </span>
                   )}
@@ -72,13 +72,13 @@ export function CartSummary({ items, storeIds }: CartSummaryProps) {
                   {formatKYD(store.total)}
                 </span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-1 rounded-full bg-muted overflow-hidden">
                 <div
                   className={cn(
-                    "h-full rounded-full transition-all duration-700",
-                    i === 0 ? "bg-savings" : "bg-muted-foreground/30"
+                    "h-full rounded-full transition-all duration-700 ease-out",
+                    i === 0 ? "bg-savings" : "bg-muted-foreground/20"
                   )}
-                  style={{ width: `${(store.total / maxTotal) * 100}%` }}
+                  style={{ width: isInView ? `${(store.total / maxTotal) * 100}%` : "0%" }}
                 />
               </div>
             </div>
@@ -86,12 +86,13 @@ export function CartSummary({ items, storeIds }: CartSummaryProps) {
         </CardContent>
       </Card>
 
-      <Card className="ring-1 ring-savings/20 bg-savings/[0.02]">
+      <Card className="rounded-2xl ring-1 ring-savings/20 bg-savings/[0.02]">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5 text-savings" />
             Optimal Split
             {savings > 0 && (
-              <span className="inline-flex items-center rounded-full bg-savings/15 px-2 py-0.5 text-xs font-medium text-savings">
+              <span className="inline-flex items-center rounded-full bg-savings/15 px-2 py-0.5 text-[11px] font-bold text-savings">
                 Save {formatKYD(savings)}
               </span>
             )}
@@ -113,7 +114,7 @@ export function CartSummary({ items, storeIds }: CartSummaryProps) {
                       {breakdown.itemCount} item{breakdown.itemCount > 1 ? "s" : ""}
                     </span>
                   </div>
-                  <span className="tabular-nums">{formatKYD(breakdown.total)}</span>
+                  <span className="tabular-nums font-medium">{formatKYD(breakdown.total)}</span>
                 </div>
               ))}
           </div>

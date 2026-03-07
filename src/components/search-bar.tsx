@@ -91,35 +91,35 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange }: SearchB
 
   return (
     <div className="space-y-2">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+      <div className="relative group">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none transition-colors group-focus-within:text-primary" />
         <Input
           ref={inputRef}
           type="search"
-          placeholder="Search products (e.g., chicken nuggets, milk, bread)..."
+          placeholder="Search products..."
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
-          className="text-base py-3 pl-10 pr-12 rounded-full md:text-lg md:py-6"
+          className="text-base h-12 pl-11 pr-12 rounded-2xl border-border/60 bg-card shadow-sm transition-all duration-200 focus-visible:shadow-md focus-visible:border-primary/30 md:text-lg md:h-14 md:rounded-full"
         />
         {loading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-5 w-5 animate-spin text-primary/60" />
           </div>
         )}
       </div>
 
       {/* Sort controls — show when there are results */}
       {query.length >= 2 && (
-        <div className="flex items-center gap-2 px-1">
+        <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
           <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <div className="flex gap-1 flex-wrap">
             {SORT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setSort(opt.value)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-200 active:scale-95 ${
                   sort === opt.value
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >

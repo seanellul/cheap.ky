@@ -113,9 +113,9 @@ export default function CartPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-xl font-bold sm:text-2xl">My Cart</h1>
-        <div className="animate-pulse space-y-3">
+        <div className="space-y-2 stagger-children">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-muted rounded-lg" />
+            <div key={i} className="h-20 skeleton-shimmer rounded-2xl" />
           ))}
         </div>
       </div>
@@ -134,11 +134,11 @@ export default function CartPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold sm:text-2xl">My Cart</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             We find the cheapest store for each item
           </p>
         </div>
@@ -176,14 +176,91 @@ export default function CartPage() {
         />
       ) : (
         <>
-          <div className="border rounded-xl overflow-hidden">
+          {/* Mobile: card-based items */}
+          <div className="sm:hidden space-y-2 stagger-children">
+            {items.map((item) => {
+              let bestPrice = Infinity;
+              let bestStore = "";
+              for (const storeId of activeStoreIds) {
+                const p = item.prices[storeId]?.price;
+                if (p != null && p < bestPrice) {
+                  bestPrice = p;
+                  bestStore = storeId;
+                }
+              }
+
+              return (
+                <div
+                  key={item.cartItemId}
+                  className="rounded-2xl border bg-card p-3 space-y-2.5"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm leading-snug line-clamp-2">{item.name}</div>
+                      {bestStore && (
+                        <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {item.prices[bestStore]?.productName}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => removeItem(item)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    {/* Quantity controls */}
+                    <div className="flex items-center gap-1.5 bg-muted/60 rounded-xl p-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => updateQuantity(item, item.quantity - 1)}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </Button>
+                      <span className="text-sm font-semibold w-7 text-center tabular-nums">{item.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => updateQuantity(item, item.quantity + 1)}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* Best price */}
+                    {bestPrice < Infinity ? (
+                      <div className="flex items-center gap-2">
+                        <StoreBadge storeId={bestStore} size="sm" />
+                        <span className="text-base font-bold text-savings tabular-nums">
+                          {formatKYD(bestPrice * item.quantity)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">--</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block border rounded-xl overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/40">
                   <th className="py-2.5 px-3 text-left text-sm font-medium">Item</th>
                   <th className="py-2.5 px-2 text-center text-sm font-medium w-28">Qty</th>
                   {activeStoreIds.map((id) => (
-                    <th key={id} className="py-2.5 px-2 text-center text-sm font-medium hidden sm:table-cell">
+                    <th key={id} className="py-2.5 px-2 text-center text-sm font-medium hidden md:table-cell">
                       <StoreBadge storeId={id} />
                     </th>
                   ))}
@@ -241,7 +318,7 @@ export default function CartPage() {
                         return (
                           <td
                             key={storeId}
-                            className="py-3 px-2 text-center text-sm tabular-nums hidden sm:table-cell"
+                            className="py-3 px-2 text-center text-sm tabular-nums hidden md:table-cell"
                           >
                             {price != null ? (
                               <div>

@@ -3,6 +3,7 @@
 import { ProductImage } from "@/components/product-image";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
@@ -17,10 +18,11 @@ interface CompareCardProps {
   savings: number;
   maxPrice: number;
   prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   onClick?: () => void;
 }
 
-export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, maxPrice, prices, onClick }: CompareCardProps) {
+export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, maxPrice, prices, priceChanges, onClick }: CompareCardProps) {
   let cheapestStore: string | null = null;
   let cheapestPrice = Infinity;
   for (const storeId of STORE_IDS) {
@@ -76,6 +78,9 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
             >
               <StoreBadge storeId={storeId} size="sm" />
               <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+              {priceChanges?.[storeId] && (
+                <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
+              )}
             </div>
           );
         })}

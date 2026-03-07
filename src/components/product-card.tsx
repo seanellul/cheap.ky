@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -17,13 +18,14 @@ interface ProductCardProps {
   size: string | null;
   imageUrl: string | null;
   prices: Record<string, { price: number | null; salePrice: number | null }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
   style?: React.CSSProperties;
 }
 
-export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice: _minPrice, onAddToCart, onClickProduct, style }: ProductCardProps) {
+export function ProductCard({ id, name, brand, size, imageUrl, prices, priceChanges, minPrice: _minPrice, onAddToCart, onClickProduct, style }: ProductCardProps) {
   const [added, setAdded] = useState(false);
 
   let cheapestStore: string | null = null;
@@ -97,6 +99,9 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
               >
                 <StoreBadge storeId={storeId} size="sm" />
                 <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+                {priceChanges?.[storeId] && (
+                  <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
+                )}
               </div>
             );
           })}

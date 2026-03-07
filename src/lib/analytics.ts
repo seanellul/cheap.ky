@@ -59,3 +59,16 @@ export function trackAppBannerDismiss() {
 export function trackAppRequest(platform: "ios" | "android") {
   capture("app_request", { platform });
 }
+
+// Onboarding
+export function trackOnboardingStarted() {
+  capture("onboarding_started");
+}
+
+export function trackOnboardingCompleted(stepsViewed: number) {
+  capture("onboarding_completed", { steps_viewed: stepsViewed });
+}
+
+export function trackOnboardingSkipped(atStep: number) {
+  capture("onboarding_skipped", { at_step: atStep });
+}

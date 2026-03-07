@@ -9,11 +9,16 @@ export async function GET() {
     return NextResponse.json(cache.data);
   }
 
-  const [productRow, storeRow, matchRow, savingsRow] = await Promise.all([
+  const [productRow, storeRow, matchRow] = await Promise.all([
     rawSql("SELECT COUNT(*) AS count FROM products"),
     rawSql("SELECT COUNT(*) AS count FROM stores WHERE active = true"),
     rawSql("SELECT COUNT(*) AS count FROM product_matches"),
-    rawSql(`
+  ]);
+
+  let avgSavingsPct = 0;
+  let maxSavingsKyd = 0;
+  try {
+    const savingsRow = await rawSql(`
       WITH prices AS (
         SELECT
           pm.product_id,
@@ -26,19 +31,23 @@ export async function GET() {
         HAVING COUNT(DISTINCT sp.store_id) >= 2
       )
       SELECT
-        ROUND(AVG(100.0 * (priciest - cheapest) / NULLIF(priciest, 0))::numeric, 0) AS avg_savings_pct,
-        ROUND(MAX(priciest - cheapest)::numeric, 2) AS max_savings_kyd
+        ROUND(AVG(100.0 * (priciest - cheapest) / NULLIF(priciest, 0)), 0) AS avg_savings_pct,
+        ROUND(MAX(priciest - cheapest), 2) AS max_savings_kyd
       FROM prices
       WHERE priciest > cheapest
-    `),
-  ]);
+    `);
+    avgSavingsPct = Number(savingsRow[0]?.avg_savings_pct ?? 0);
+    maxSavingsKyd = Number(savingsRow[0]?.max_savings_kyd ?? 0);
+  } catch {
+    // savings query is optional — don't break the stats endpoint
+  }
 
   const data = {
     products: Number(productRow[0]?.count ?? 0),
     stores: Number(storeRow[0]?.count ?? 0),
     matches: Number(matchRow[0]?.count ?? 0),
-    avgSavingsPct: Number(savingsRow[0]?.avg_savings_pct ?? 0),
-    maxSavingsKyd: Number(savingsRow[0]?.max_savings_kyd ?? 0),
+    avgSavingsPct,
+    maxSavingsKyd,
   };
 
   cache = { data, ts: Date.now() };

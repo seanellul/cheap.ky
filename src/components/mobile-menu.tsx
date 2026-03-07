@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -88,8 +89,8 @@ export function MobileMenu() {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Only render overlay + drawer when open */}
-      {open && (
+      {/* Portal to body so drawer escapes header's stacking context */}
+      {open && createPortal(
         <div className="fixed inset-0 z-[60] md:hidden">
           {/* Backdrop */}
           <div
@@ -150,7 +151,8 @@ export function MobileMenu() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

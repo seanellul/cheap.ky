@@ -8,13 +8,14 @@ import { formatKYD } from "@/lib/utils/currency";
 interface ReportData {
   overview: {
     total_compared: number;
-    avg_fosters: string;
-    avg_hurleys: string;
-    avg_costuless: string;
-    avg_pricedright: string;
-    avg_savings: string;
-    avg_pct_diff: string;
-    total_potential_savings: string;
+    avg_fosters: number;
+    avg_hurleys: number;
+    avg_costuless: number;
+    avg_pricedright: number;
+    avg_shopright: number;
+    avg_savings: number;
+    avg_pct_diff: number;
+    total_potential_savings: number;
     over_20pct: number;
     over_50pct: number;
   };
@@ -23,15 +24,16 @@ interface ReportData {
     hurleys: number;
     costuless: number;
     pricedright: number;
+    shopright: number;
     total: number;
   };
   distribution: Array<{ bucket: string; count: number }>;
   categoryInsights: Array<{
     category: string;
     product_count: number;
-    avg_pct_diff: string;
-    avg_savings_per_item: string;
-    total_savings: string;
+    avg_pct_diff: number;
+    avg_savings_per_item: number;
+    total_savings: number;
   }>;
   biggestGaps: Array<{
     id: number;
@@ -42,10 +44,11 @@ interface ReportData {
     hurleys_price: number | null;
     costuless_price: number | null;
     pricedright_price: number | null;
+    shopright_price: number | null;
     best_price: number;
     worst_price: number;
     savings: number;
-    pct_diff: string;
+    pct_diff: number;
     num_stores: number;
   }>;
   storeBests: Record<string, Array<{
@@ -53,16 +56,16 @@ interface ReportData {
     size: string | null;
     price: number;
     other_price: number;
-    pct: string;
+    pct: number;
   }>>;
   headToHead: {
     total: number;
     fosters_cheaper: number;
     hurleys_cheaper: number;
     same_price: number;
-    avg_fosters: string;
-    avg_hurleys: string;
-    total_diff: string;
+    avg_fosters: number;
+    avg_hurleys: number;
+    total_diff: number;
   };
   storeCounts: Array<{ store_id: string; count: number }>;
   threeStoreProducts: Array<{
@@ -73,10 +76,11 @@ interface ReportData {
     hurleys_price: number;
     costuless_price: number;
     pricedright_price: number;
+    shopright_price: number;
     best_price: number;
     worst_price: number;
     savings: number;
-    pct_diff: string;
+    pct_diff: number;
   }>;
   purchasingPower: Record<string, Record<string, number>>;
   allThreeBasket: {
@@ -85,6 +89,7 @@ interface ReportData {
     hurleys: number;
     costuless: number;
     pricedright: number;
+    shopright: number;
   } | null;
 }
 
@@ -93,6 +98,7 @@ const STORE_COLORS: Record<string, string> = {
   hurleys: "bg-[#E31837]",
   costuless: "bg-[#0066CC]",
   pricedright: "bg-[#7B2FBE]",
+  shopright: "bg-[#2563EB]",
 };
 
 const STORE_COLORS_TEXT: Record<string, string> = {
@@ -100,14 +106,16 @@ const STORE_COLORS_TEXT: Record<string, string> = {
   hurleys: "text-[#E31837]",
   costuless: "text-[#0066CC]",
   pricedright: "text-[#7B2FBE]",
+  shopright: "text-[#2563EB]",
 };
 
-const ALL_STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright"] as const;
+const ALL_STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
 const STORE_NAMES: Record<string, string> = {
   fosters: "Foster's",
   hurleys: "Hurley's",
   costuless: "Cost-U-Less",
   pricedright: "Priced Right",
+  shopright: "Shopright",
 };
 
 function StatCard({ icon: Icon, label, value, sub }: {
@@ -192,7 +200,7 @@ export default function ReportPage() {
       <div>
         <h1 className="text-xl font-bold sm:text-2xl lg:text-3xl">Grocery Market Report</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Analysis of {overview.total_compared.toLocaleString()} identical products (UPC-matched) across {storeCounts.length} stores
+          Analysis of {overview.total_compared.toLocaleString()} matched products across {storeCounts.length} stores
         </p>
       </div>
 
@@ -207,14 +215,14 @@ export default function ReportPage() {
         <StatCard
           icon={DollarSign}
           label="Total Savings Available"
-          value={formatKYD(parseFloat(overview.total_potential_savings))}
+          value={formatKYD(overview.total_potential_savings)}
           sub="If always buying at cheapest store"
         />
         <StatCard
           icon={Percent}
           label="Avg Price Difference"
           value={`${overview.avg_pct_diff}%`}
-          sub={`${formatKYD(parseFloat(overview.avg_savings))} per item on average`}
+          sub={`${formatKYD(overview.avg_savings)} per item on average`}
         />
         <StatCard
           icon={TrendingDown}
@@ -238,7 +246,7 @@ export default function ReportPage() {
             <BarSegment key={id} pct={(winRates[id] ?? 0) / winRates.total * 100} color={STORE_COLORS[id]} label={STORE_NAMES[id]} />
           ))}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-center">
           {ALL_STORE_IDS.map((id) => {
             const wins = winRates[id] ?? 0;
             return (
@@ -272,7 +280,7 @@ export default function ReportPage() {
               {Number(headToHead.fosters_cheaper).toLocaleString()}
             </div>
             <div className="text-xs text-muted-foreground">cheaper</div>
-            <div className="text-xs text-muted-foreground">avg {formatKYD(parseFloat(headToHead.avg_fosters))}</div>
+            <div className="text-xs text-muted-foreground">avg {formatKYD(headToHead.avg_fosters)}</div>
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-xs text-muted-foreground uppercase font-medium mt-1">Same Price</div>
@@ -287,7 +295,7 @@ export default function ReportPage() {
               {Number(headToHead.hurleys_cheaper).toLocaleString()}
             </div>
             <div className="text-xs text-muted-foreground">cheaper</div>
-            <div className="text-xs text-muted-foreground">avg {formatKYD(parseFloat(headToHead.avg_hurleys))}</div>
+            <div className="text-xs text-muted-foreground">avg {formatKYD(headToHead.avg_hurleys)}</div>
           </div>
         </div>
       </section>
@@ -316,7 +324,7 @@ export default function ReportPage() {
           return (
             <div className="space-y-6">
               {/* Big visual: normalized to cheapest = $100 */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {stores.map((store) => {
                   const equivalent = baseAmount * store.total / cheapest.total;
                   const isCheapest = store.id === cheapest.id;
@@ -572,15 +580,15 @@ export default function ReportPage() {
                   <td className="py-2.5 px-2 text-center tabular-nums">{cat.product_count}</td>
                   <td className="py-2.5 px-2 text-center">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      parseFloat(cat.avg_pct_diff) >= 25 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      : parseFloat(cat.avg_pct_diff) >= 15 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                      cat.avg_pct_diff >= 25 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : cat.avg_pct_diff >= 15 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                       : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                     }`}>
                       {cat.avg_pct_diff}%
                     </span>
                   </td>
-                  <td className="py-2.5 px-2 text-right tabular-nums">{formatKYD(parseFloat(cat.avg_savings_per_item))}</td>
-                  <td className="py-2.5 px-2 text-right font-medium tabular-nums">{formatKYD(parseFloat(cat.total_savings))}</td>
+                  <td className="py-2.5 px-2 text-right tabular-nums">{formatKYD(cat.avg_savings_per_item)}</td>
+                  <td className="py-2.5 px-2 text-right font-medium tabular-nums">{formatKYD(cat.total_savings)}</td>
                 </tr>
               ))}
             </tbody>
@@ -594,7 +602,7 @@ export default function ReportPage() {
         <p className="text-sm text-muted-foreground">
           Products where each store significantly undercuts the competition.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {ALL_STORE_IDS.map((storeId) => (
             <div key={storeId} className="border rounded-xl p-4 bg-card space-y-3">
               <StoreBadge storeId={storeId} />
@@ -618,9 +626,9 @@ export default function ReportPage() {
       <section className="border rounded-xl p-5 bg-muted/30 space-y-2">
         <h2 className="text-sm font-bold">Methodology</h2>
         <p className="text-xs text-muted-foreground">
-          This report compares {overview.total_compared.toLocaleString()} products matched by UPC barcode across
-          {" "}{storeCounts.length} Cayman Islands grocery stores. Only exact product matches are included — same brand,
-          same size, same barcode. Products with price ratios over 5x are excluded as likely data errors.
+          This report compares {overview.total_compared.toLocaleString()} products matched across
+          {" "}{storeCounts.length} Cayman Islands grocery stores using UPC barcodes and fuzzy name matching.
+          Products with price ratios over 5x are excluded as likely data errors.
           Prices reflect the most recent store data ingestion. Sale prices are used when available.
         </p>
         <p className="text-xs text-muted-foreground">

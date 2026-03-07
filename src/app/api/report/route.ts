@@ -18,20 +18,19 @@ function numify<T>(obj: T): T {
   return obj;
 }
 
+const ALL_STORES = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
+
 const MATCHED_CTE = `
   matched AS (
     SELECT p.id, p.canonical_name as name, p.brand, p.size, p.image_url,
-      MIN(CASE WHEN sp.store_id='fosters' THEN COALESCE(sp.sale_price, sp.price) END) as fosters_price,
-      MIN(CASE WHEN sp.store_id='hurleys' THEN COALESCE(sp.sale_price, sp.price) END) as hurleys_price,
-      MIN(CASE WHEN sp.store_id='costuless' THEN COALESCE(sp.sale_price, sp.price) END) as costuless_price,
-      MIN(CASE WHEN sp.store_id='pricedright' THEN COALESCE(sp.sale_price, sp.price) END) as pricedright_price,
+      ${ALL_STORES.map(s => `MIN(CASE WHEN sp.store_id='${s}' THEN COALESCE(sp.sale_price, sp.price) END) as ${s}_price`).join(',\n      ')},
       MIN(COALESCE(sp.sale_price, sp.price)) as best_price,
       MAX(COALESCE(sp.sale_price, sp.price)) as worst_price,
       MAX(COALESCE(sp.sale_price, sp.price)) - MIN(COALESCE(sp.sale_price, sp.price)) as savings,
       COUNT(DISTINCT sp.store_id) as num_stores,
       MAX(CASE WHEN sp.store_id='fosters' THEN sp.category_raw END) as category_raw
     FROM products p
-    JOIN product_matches pm ON pm.product_id = p.id AND pm.match_method = 'upc'
+    JOIN product_matches pm ON pm.product_id = p.id
     JOIN store_products sp ON pm.store_product_id = sp.id
     WHERE COALESCE(sp.sale_price, sp.price) > 0
     GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
@@ -48,10 +47,7 @@ export async function GET() {
     WITH ${MATCHED_CTE}
     SELECT
       COUNT(*) as total_compared,
-      ROUND(AVG(fosters_price)::numeric, 2) as avg_fosters,
-      ROUND(AVG(hurleys_price)::numeric, 2) as avg_hurleys,
-      ROUND(AVG(costuless_price)::numeric, 2) as avg_costuless,
-      ROUND(AVG(pricedright_price)::numeric, 2) as avg_pricedright,
+      ${ALL_STORES.map(s => `ROUND(AVG(${s}_price)::numeric, 2) as avg_${s}`).join(',\n      ')},
       ROUND(AVG(savings)::numeric, 2) as avg_savings,
       ROUND(AVG(savings / worst_price * 100)::numeric, 1) as avg_pct_diff,
       ROUND(SUM(savings)::numeric, 2) as total_potential_savings,
@@ -60,14 +56,14 @@ export async function GET() {
     FROM matched
   `);
 
-  // 2. Store win rates
+  // 2. Store win rates — a store "wins" if its price equals the best_price
+  const winCases = ALL_STORES.map(s =>
+    `SUM(CASE WHEN ${s}_price IS NOT NULL AND ${s}_price = best_price THEN 1 ELSE 0 END) as ${s}`
+  ).join(',\n      ');
   const [winRates] = await rawSql(`
     WITH ${MATCHED_CTE}
     SELECT
-      SUM(CASE WHEN fosters_price IS NOT NULL AND fosters_price <= COALESCE(hurleys_price, fosters_price+1) AND fosters_price <= COALESCE(costuless_price, fosters_price+1) AND fosters_price <= COALESCE(pricedright_price, fosters_price+1) THEN 1 ELSE 0 END) as fosters,
-      SUM(CASE WHEN hurleys_price IS NOT NULL AND hurleys_price < COALESCE(fosters_price, hurleys_price+1) AND hurleys_price <= COALESCE(costuless_price, hurleys_price+1) AND hurleys_price <= COALESCE(pricedright_price, hurleys_price+1) THEN 1 ELSE 0 END) as hurleys,
-      SUM(CASE WHEN costuless_price IS NOT NULL AND costuless_price < COALESCE(fosters_price, costuless_price+1) AND costuless_price < COALESCE(hurleys_price, costuless_price+1) AND costuless_price <= COALESCE(pricedright_price, costuless_price+1) THEN 1 ELSE 0 END) as costuless,
-      SUM(CASE WHEN pricedright_price IS NOT NULL AND pricedright_price < COALESCE(fosters_price, pricedright_price+1) AND pricedright_price < COALESCE(hurleys_price, pricedright_price+1) AND pricedright_price < COALESCE(costuless_price, pricedright_price+1) THEN 1 ELSE 0 END) as pricedright,
+      ${winCases},
       COUNT(*) as total
     FROM matched
   `);
@@ -127,7 +123,7 @@ export async function GET() {
   const biggestGaps = await rawSql(`
     WITH ${MATCHED_CTE}
     SELECT id, name, brand, size, image_url,
-      fosters_price, hurleys_price, costuless_price, pricedright_price,
+      ${ALL_STORES.map(s => `${s}_price`).join(', ')},
       best_price, worst_price, savings,
       ROUND((savings / worst_price * 100)::numeric, 0) as pct_diff,
       num_stores
@@ -138,9 +134,9 @@ export async function GET() {
 
   // 6. Where each store is cheapest
   const storeBests: Record<string, Array<{ name: string; size: string | null; price: number; other_price: number; pct: string }>> = {};
-  for (const store of ["fosters", "hurleys", "costuless", "pricedright"]) {
+  for (const store of ALL_STORES) {
     const col = `${store}_price`;
-    const others = ["fosters", "hurleys", "costuless", "pricedright"].filter(s => s !== store);
+    const others = ALL_STORES.filter(s => s !== store);
     const otherCols = others.map(s => `${s}_price`);
 
     storeBests[store] = (await rawSql(`
@@ -177,12 +173,12 @@ export async function GET() {
   );
 
   // 9. Products at all stores
-  const allStoreIds = ["fosters", "hurleys", "costuless", "pricedright"];
+  const allStoreIds = [...ALL_STORES];
   const allNotNull = allStoreIds.map(s => `${s}_price IS NOT NULL`).join(' AND ');
   const threeStoreProducts = await rawSql(`
     WITH ${MATCHED_CTE}
     SELECT id, name, size, image_url,
-      fosters_price, hurleys_price, costuless_price, pricedright_price,
+      ${ALL_STORES.map(s => `${s}_price`).join(', ')},
       best_price, worst_price, savings,
       ROUND((savings / worst_price * 100)::numeric, 0) as pct_diff
     FROM matched

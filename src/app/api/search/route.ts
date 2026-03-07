@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
 import { getPriceChanges } from "@/lib/db/price-changes";
+import { normalizeUpc } from "@/lib/utils/upc";
+
+function looksLikeBarcode(q: string): boolean {
+  const digits = q.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 14 && digits === q.trim();
+}
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
@@ -8,6 +14,96 @@ export async function GET(req: NextRequest) {
 
   if (q.length < 2) {
     return NextResponse.json({ results: [] });
+  }
+
+  // Barcode scan: if the query looks like a UPC/EAN, do an exact lookup first
+  if (looksLikeBarcode(q)) {
+    const normalized = normalizeUpc(q);
+    if (normalized) {
+      const barcodeResults = await rawSql(
+        `SELECT
+           p.id,
+           p.canonical_name,
+           p.brand,
+           p.size,
+           p.image_url,
+           MIN(COALESCE(sp.sale_price, sp.price)) AS min_price,
+           COUNT(DISTINCT sp.store_id) AS store_count,
+           json_agg(json_build_object(
+             'store_id', sp.store_id,
+             'price', sp.price,
+             'sale_price', sp.sale_price,
+             'name', sp.name
+           )) AS store_prices
+         FROM products p
+         JOIN product_matches pm ON pm.product_id = p.id
+         JOIN store_products sp ON pm.store_product_id = sp.id
+         WHERE sp.upc = $1 AND sp.price IS NOT NULL
+         GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
+         LIMIT 5`,
+        [normalized]
+      );
+
+      if (barcodeResults.length > 0) {
+        const results = barcodeResults.map((row: Record<string, unknown>) => {
+          const storePricesArr = row.store_prices as Array<{
+            store_id: string; price: number | null; sale_price: number | null; name: string;
+          }>;
+          const prices: Record<string, { price: number | null; salePrice: number | null; name: string }> = {};
+          for (const sp of storePricesArr) {
+            if (!prices[sp.store_id]) {
+              prices[sp.store_id] = { price: sp.price, salePrice: sp.sale_price, name: sp.name };
+            }
+          }
+          return {
+            id: Number(row.id),
+            name: String(row.canonical_name),
+            brand: row.brand as string | null,
+            size: row.size as string | null,
+            imageUrl: row.image_url as string | null,
+            minPrice: row.min_price != null ? Number(row.min_price) : null,
+            storeCount: Number(row.store_count),
+            prices,
+            barcodeScan: true,
+          };
+        });
+        return NextResponse.json({ results, barcodeScan: true });
+      }
+
+      // No matched product — try unmatched store_products by UPC
+      const unmatchedBarcode = await rawSql(
+        `SELECT sp.id, sp.name, sp.brand, sp.size, sp.image_url, sp.store_id,
+                sp.price, sp.sale_price, COALESCE(sp.sale_price, sp.price) AS min_price
+         FROM store_products sp
+         WHERE sp.upc = $1 AND sp.price IS NOT NULL
+         LIMIT 5`,
+        [normalized]
+      );
+
+      if (unmatchedBarcode.length > 0) {
+        const results = unmatchedBarcode.map((sp: Record<string, unknown>) => ({
+          id: -Number(sp.id),
+          name: String(sp.name),
+          brand: sp.brand as string | null,
+          size: sp.size as string | null,
+          imageUrl: sp.image_url as string | null,
+          minPrice: sp.min_price != null ? Number(sp.min_price) : null,
+          storeCount: 1,
+          prices: {
+            [String(sp.store_id)]: {
+              price: sp.price != null ? Number(sp.price) : null,
+              salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
+              name: String(sp.name),
+            },
+          },
+          barcodeScan: true,
+        }));
+        return NextResponse.json({ results, barcodeScan: true });
+      }
+
+      // Barcode not found in DB at all
+      return NextResponse.json({ results: [], barcodeScan: true, barcodeNotFound: true });
+    }
   }
 
   const searchTerm = `%${q}%`;

@@ -25,7 +25,7 @@ import { SearchResultSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { useCart } from "@/lib/contexts/cart-context";
-import { trackSearch, trackAddToCart, trackProductView } from "@/lib/analytics";
+import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
 
 interface SearchResult {
@@ -134,8 +134,13 @@ export default function HomePage() {
     setHasSearched(true);
     setResultKey((k) => k + 1);
     if (query.length >= 2) {
-      track("search", query, { resultCount: r.length });
-      trackSearch(query, r.length);
+      const isBarcode = /^\d{8,14}$/.test(query.trim());
+      if (isBarcode) {
+        trackBarcodeScan(query, r.length > 0, r.length);
+      } else {
+        track("search", query, { resultCount: r.length });
+        trackSearch(query, r.length);
+      }
     }
   }
 

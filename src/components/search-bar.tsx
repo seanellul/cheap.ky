@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, ArrowUpDown } from "lucide-react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { Search, Loader2, ArrowUpDown, ScanBarcode } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
+const BarcodeScanner = lazy(() =>
+  import("@/components/barcode-scanner").then((m) => ({ default: m.BarcodeScanner }))
+);
 
 interface SearchResult {
   id: number;
@@ -35,8 +39,14 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [loading, setLoading] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768 && /Mobi|Android/i.test(navigator.userAgent));
+  }, []);
 
   function doSearch(q: string, s: SortOption) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -84,6 +94,12 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     inputRef.current?.focus();
   }
 
+  function handleBarcodeScan(barcode: string) {
+    setScannerOpen(false);
+    setQuery(barcode);
+    onQueryChange?.(barcode);
+  }
+
   // Expose setSearchQuery via ref-like pattern on window for suggestions
   useEffect(() => {
     (window as any).__setSearchQuery = setSearchQuery;
@@ -104,12 +120,32 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
           onBlur={() => onFocusChange?.(false)}
           className="text-base h-12 pl-11 pr-12 rounded-2xl border-border/60 bg-card shadow-sm transition-all duration-200 focus-visible:shadow-md focus-visible:border-primary/30 md:text-lg md:h-14 md:rounded-full"
         />
-        {loading && (
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {loading && (
             <Loader2 className="h-5 w-5 animate-spin text-primary/60" />
-          </div>
-        )}
+          )}
+          {isMobile && !loading && (
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors active:scale-90"
+              aria-label="Scan barcode"
+            >
+              <ScanBarcode className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Barcode scanner overlay */}
+      {scannerOpen && (
+        <Suspense fallback={null}>
+          <BarcodeScanner
+            onScan={handleBarcodeScan}
+            onClose={() => setScannerOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Sort controls — show when there are results */}
       {query.length >= 2 && (

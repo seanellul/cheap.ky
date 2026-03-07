@@ -51,3 +51,7 @@ export function trackAppBannerClick(platform: string) {
 export function trackAppBannerDismiss() {
   capture("app_banner_dismissed");
 }
+
+export function trackAppRequest(platform: "ios" | "android") {
+  capture("app_request", { platform });
+}

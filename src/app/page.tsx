@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   ArrowLeftRight,
@@ -97,6 +98,14 @@ function formatCount(n: number): string {
 }
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
+function HomePageContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -106,6 +115,19 @@ export default function HomePage() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [resultKey, setResultKey] = useState(0);
   const { refreshCart } = useCart();
+  const searchParams = useSearchParams();
+
+  // Read ?q= param (e.g. from history page links) and trigger search
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      // Wait for SearchBar to mount and expose __setSearchQuery
+      const timer = setTimeout(() => {
+        (window as any).__setSearchQuery?.(q);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/stats")

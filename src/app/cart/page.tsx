@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingCart, Trash2, Minus, Plus } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CartSummary } from "@/components/cart-summary";
 import { ShoppingList } from "@/components/shopping-list";
@@ -10,6 +11,7 @@ import { StoreBadge } from "@/components/store-badge";
 import { formatKYD } from "@/lib/utils/currency";
 import { useCart } from "@/lib/contexts/cart-context";
 import { STORE_IDS } from "@/components/price-comparison-row";
+import { addCartSnapshot } from "@/lib/history";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +25,7 @@ import {
 
 interface CartItem {
   cartItemId: number;
+  productId?: number;
   name: string;
   quantity: number;
   prices: Record<string, { price: number | null; productName: string }>;
@@ -50,8 +53,9 @@ export default function CartPage() {
       source: "smart" as const,
     }));
 
-    const searchItems: CartItem[] = (cartData.items || []).map((i: { cartItemId: number; name: string; quantity: number; prices: Record<string, number | null> }) => ({
+    const searchItems: CartItem[] = (cartData.items || []).map((i: { cartItemId: number; productId: number; name: string; quantity: number; prices: Record<string, number | null> }) => ({
       cartItemId: i.cartItemId,
+      productId: i.productId,
       name: i.name,
       quantity: i.quantity,
       prices: Object.fromEntries(
@@ -143,6 +147,37 @@ export default function CartPage() {
           </p>
         </div>
         {items.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const snapshotItems = items.map((item) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  productId: item.productId,
+                  prices: Object.fromEntries(
+                    activeStoreIds.map((sid) => [sid, item.prices[sid]?.price ?? null])
+                  ),
+                }));
+                let totalBestPrice = 0;
+                for (const item of items) {
+                  let best = Infinity;
+                  for (const sid of activeStoreIds) {
+                    const p = item.prices[sid]?.price;
+                    if (p != null && p < best) best = p;
+                  }
+                  if (best < Infinity) totalBestPrice += best * item.quantity;
+                }
+                addCartSnapshot({ items: snapshotItems, totalBestPrice });
+                toast.success("Cart saved to history", {
+                  action: { label: "View History", onClick: () => window.location.href = "/history" },
+                });
+              }}
+            >
+              <Clock className="h-3.5 w-3.5 mr-1" />
+              Save
+            </Button>
           <Dialog open={clearOpen} onOpenChange={setClearOpen}>
             <DialogTrigger render={
               <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10">
@@ -163,6 +198,7 @@ export default function CartPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         )}
       </div>
 

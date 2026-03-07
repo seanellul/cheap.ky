@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   ListChecks,
   ShoppingCart,
+  History,
   BarChart3,
   BookOpen,
   Compass,
@@ -28,6 +29,7 @@ const MENU_SECTIONS = [
       { href: "/compare", icon: ArrowLeftRight, label: "Compare Prices" },
       { href: "/staples", icon: ListChecks, label: "Everyday Staples" },
       { href: "/cart", icon: ShoppingCart, label: "My Cart" },
+      { href: "/history", icon: History, label: "Shopping History" },
     ],
   },
   {

@@ -25,6 +25,7 @@ interface PriceComparisonRowProps {
   size: string | null;
   imageUrl: string | null;
   prices: Record<string, { price: number | null; salePrice: number | null }>;
+  minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
   showAddToCart?: boolean;

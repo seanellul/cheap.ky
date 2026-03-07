@@ -7,6 +7,10 @@ const STAPLE_ITEMS = [
   { name: "Bananas", category: "Produce", keywords: ["banana", "yellow banana"] },
   { name: "Pineapple", category: "Produce", keywords: ["pineapple", "pineapple whole"] },
   { name: "Apples", category: "Produce", keywords: ["apple", "gala apple", "fuji apple", "red apple", "green apple"] },
+  { name: "Tomatoes", category: "Produce", keywords: ["tomato", "roma tomato", "vine tomato", "cherry tomato"] },
+  { name: "Lettuce", category: "Produce", keywords: ["lettuce", "romaine lettuce", "iceberg lettuce", "green leaf lettuce"] },
+  { name: "Bell Peppers", category: "Produce", keywords: ["bell pepper", "green pepper", "red pepper", "sweet pepper"] },
+  { name: "Limes", category: "Produce", keywords: ["lime", "limes", "key lime"] },
   { name: "Broccoli", category: "Produce", keywords: ["broccoli", "broccoli crown", "broccoli bunch"] },
   { name: "Garlic", category: "Produce", keywords: ["garlic", "garlic bulb", "garlic head"] },
   { name: "Onions", category: "Produce", keywords: ["onion", "yellow onion", "white onion"] },
@@ -15,31 +19,48 @@ const STAPLE_ITEMS = [
   { name: "Potatoes", category: "Produce", keywords: ["potato", "russet potato", "white potato"] },
 
   // Meat & Poultry
+  { name: "Chicken Breast", category: "Meat & Poultry", keywords: ["chicken breast", "boneless chicken breast", "skinless chicken breast"] },
   { name: "Chicken Wings (Fresh)", category: "Meat & Poultry", keywords: ["chicken wing"] },
   { name: "Minced/Ground Beef", category: "Meat & Poultry", keywords: ["ground beef", "minced beef", "mince beef"] },
   { name: "Beef Steak", category: "Meat & Poultry", keywords: ["beef steak", "ribeye", "sirloin steak", "ny strip"] },
   { name: "Ham (Deli)", category: "Meat & Poultry", keywords: ["ham slice", "deli ham", "sliced ham", "cooked ham"] },
+  { name: "Bacon", category: "Meat & Poultry", keywords: ["bacon", "smoked bacon", "turkey bacon"] },
 
   // Seafood
   { name: "Salmon Steak/Fillet", category: "Seafood", keywords: ["salmon fillet", "salmon steak", "salmon portion"] },
   { name: "Tuna Cans", category: "Seafood", keywords: ["tuna chunk", "tuna solid", "starkist tuna", "bumble bee tuna", "canned tuna", "tuna in water", "tuna in oil", "tuna light"] },
+  { name: "Shrimp (Frozen)", category: "Seafood", keywords: ["shrimp frozen", "raw shrimp", "cooked shrimp", "jumbo shrimp"] },
 
   // Dairy & Eggs
   { name: "Eggs (Dozen)", category: "Dairy & Eggs", keywords: ["egg", "eggs dozen", "large egg", "local egg"] },
   { name: "Milk (Fresh)", category: "Dairy & Eggs", keywords: ["whole milk", "2% milk", "1% milk", "fresh milk", "milk gal", "milk quart", "milk half"] },
+  { name: "Butter", category: "Dairy & Eggs", keywords: ["butter unsalted", "butter salted", "stick butter", "land o lakes butter", "kerrygold butter"] },
   { name: "Cheddar Cheese", category: "Dairy & Eggs", keywords: ["cheddar cheese", "cheddar block", "mild cheddar", "sharp cheddar"] },
 
   // Bakery & Pantry
   { name: "Bread (White)", category: "Bakery & Pantry", keywords: ["white bread", "sandwich bread"] },
+  { name: "Rice", category: "Bakery & Pantry", keywords: ["white rice", "long grain rice", "jasmine rice", "basmati rice"] },
   { name: "Pasta", category: "Bakery & Pantry", keywords: ["spaghetti", "penne", "pasta"] },
+  { name: "Cooking Oil", category: "Bakery & Pantry", keywords: ["vegetable oil", "canola oil", "cooking oil", "corn oil"] },
+  { name: "Sugar", category: "Bakery & Pantry", keywords: ["granulated sugar", "white sugar", "cane sugar"] },
+  { name: "Flour", category: "Bakery & Pantry", keywords: ["all purpose flour", "plain flour", "wheat flour"] },
   { name: "Olives", category: "Bakery & Pantry", keywords: ["green olives", "black olives", "kalamata olives", "stuffed olives", "pitted olives"] },
+
+  // Beverages
+  { name: "Bottled Water (Case)", category: "Beverages", keywords: ["water case", "water pack", "bottled water", "spring water"] },
+  { name: "Orange Juice", category: "Beverages", keywords: ["orange juice", "tropicana", "simply orange", "minute maid orange"] },
 
   // Pet
   { name: "Cat Food", category: "Pet", keywords: ["cat food", "cat chow"] },
   { name: "Cat Litter", category: "Pet", keywords: ["cat litter", "clumping litter"] },
+  { name: "Dog Food", category: "Pet", keywords: ["dog food", "dog chow", "pedigree dog", "purina dog"] },
 
   // Household
   { name: "Garbage Bags", category: "Household", keywords: ["garbage bag", "trash bag", "bin bag", "refuse bag"] },
+  { name: "Paper Towels", category: "Household", keywords: ["paper towel", "bounty paper", "kitchen towel"] },
+  { name: "Dish Soap", category: "Household", keywords: ["dish soap", "dawn dish", "palmolive dish", "dishwashing liquid"] },
+  { name: "Laundry Detergent", category: "Household", keywords: ["laundry detergent", "tide detergent", "gain detergent", "liquid detergent"] },
+  { name: "Toilet Paper", category: "Household", keywords: ["toilet paper", "bath tissue", "charmin", "angel soft"] },
 ];
 
 async function seedStaples() {

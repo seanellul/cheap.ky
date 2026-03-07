@@ -112,14 +112,20 @@ export default async function BlogPostPage({ params }: PageProps) {
           </header>
 
           <div
-            className="prose prose-sm dark:prose-invert max-w-none
-              prose-headings:font-bold prose-headings:tracking-tight
-              prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-              prose-table:border prose-table:rounded-xl prose-table:overflow-hidden
-              prose-thead:bg-muted/40
-              prose-th:py-2.5 prose-th:px-3 prose-th:text-sm prose-th:font-medium
-              prose-td:py-2 prose-td:px-3 prose-td:text-sm
-              prose-tr:border-b"
+            className="blog-content prose prose-neutral dark:prose-invert max-w-none
+              prose-headings:font-bold prose-headings:tracking-tight prose-headings:mt-8 prose-headings:mb-4
+              prose-h2:text-xl prose-h2:border-b prose-h2:pb-2 prose-h2:border-border
+              prose-p:leading-relaxed prose-p:text-foreground/90
+              prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+              prose-strong:text-foreground prose-strong:font-semibold
+              prose-em:text-muted-foreground
+              prose-li:text-foreground/90
+              prose-ul:my-4 prose-ol:my-4
+              prose-table:my-6 prose-table:border prose-table:border-border prose-table:rounded-xl prose-table:overflow-hidden prose-table:text-sm
+              prose-thead:bg-muted/50
+              prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-th:border-b prose-th:border-border
+              prose-td:py-2.5 prose-td:px-4 prose-td:border-b prose-td:border-border/50
+              prose-tr:transition-colors hover:prose-tr:bg-muted/30"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </article>

@@ -16,12 +16,13 @@ interface ProductCardProps {
   size: string | null;
   imageUrl: string | null;
   prices: Record<string, { price: number | null; salePrice: number | null }>;
+  minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
   style?: React.CSSProperties;
 }
 
-export function ProductCard({ id, name, brand, size, imageUrl, prices, onAddToCart, onClickProduct, style }: ProductCardProps) {
+export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice: _minPrice, onAddToCart, onClickProduct, style }: ProductCardProps) {
   const [added, setAdded] = useState(false);
 
   let cheapestStore: string | null = null;

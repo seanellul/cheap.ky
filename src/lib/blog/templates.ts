@@ -8,14 +8,22 @@ import type {
   PriceDrop,
 } from "./types";
 
+// ── Inline styles (Tailwind classes don't work in raw HTML strings) ───
+
+const GREEN = "color: #047857; font-weight: 600;";
+const GREEN_BG = "background: #ecfdf5; color: #047857; padding: 2px 8px; border-radius: 9999px; font-size: 0.8em; font-weight: 600;";
+const RED = "color: #dc2626; font-weight: 600;";
+const MUTED = "color: #6b7280; font-size: 0.85em;";
+const TABULAR = "font-variant-numeric: tabular-nums;";
+
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function gapRow(g: PriceGap): string {
   return `<tr>
     <td><a href="/prices/${g.productSlug}">${g.productName}</a></td>
-    <td class="text-savings font-semibold">${formatKYD(g.cheapestPrice)} <span class="text-muted-foreground text-xs">(${g.cheapestStore})</span></td>
-    <td>${formatKYD(g.expensivePrice)} <span class="text-muted-foreground text-xs">(${g.expensiveStore})</span></td>
-    <td class="text-savings font-semibold">${formatKYD(g.savings)} (${g.pctDiff}%)</td>
+    <td style="${TABULAR}"><span style="${GREEN}">${formatKYD(g.cheapestPrice)}</span> <span style="${MUTED}">${g.cheapestStore}</span></td>
+    <td style="${TABULAR}">${formatKYD(g.expensivePrice)} <span style="${MUTED}">${g.expensiveStore}</span></td>
+    <td style="${TABULAR}"><span style="${GREEN_BG}">${formatKYD(g.savings)} (${g.pctDiff}%)</span></td>
   </tr>`;
 }
 
@@ -23,9 +31,9 @@ function dropRow(d: PriceDrop): string {
   return `<tr>
     <td><a href="/prices/${d.productSlug}">${d.productName}</a></td>
     <td>${d.storeName}</td>
-    <td class="line-through text-muted-foreground">${formatKYD(d.oldPrice)}</td>
-    <td class="text-savings font-semibold">${formatKYD(d.newPrice)}</td>
-    <td class="text-savings">${formatKYD(d.dropAmount)} (${d.dropPct}% off)</td>
+    <td style="text-decoration: line-through; ${MUTED} ${TABULAR}">${formatKYD(d.oldPrice)}</td>
+    <td style="${GREEN} ${TABULAR}">${formatKYD(d.newPrice)}</td>
+    <td style="${TABULAR}"><span style="${GREEN_BG}">${formatKYD(d.dropAmount)} (${d.dropPct}% off)</span></td>
   </tr>`;
 }
 
@@ -50,8 +58,8 @@ export function weeklyReport(data: WeeklyReportData): BlogArticle {
     ${data.storeSummaries
       .sort((a, b) => b.winRate - a.winRate)
       .map(
-        (s) =>
-          `<tr><td><a href="/store/${s.storeId}">${s.storeName}</a></td><td>${s.matchedProducts.toLocaleString()}</td><td class="font-semibold">${s.winRate}%</td><td>${formatKYD(s.avgPrice)}</td></tr>`
+        (s, i) =>
+          `<tr><td><a href="/store/${s.storeId}">${s.storeName}</a></td><td>${s.matchedProducts.toLocaleString()}</td><td style="${i === 0 ? GREEN : ""} ${TABULAR}">${s.winRate}%</td><td style="${TABULAR}">${formatKYD(s.avgPrice)}</td></tr>`
       )
       .join("\n    ")}
   </tbody>
@@ -89,7 +97,7 @@ ${
       .slice(0, 10)
       .map(
         (c) =>
-          `<tr><td><a href="/category/${c.categorySlug}">${c.category}</a></td><td>${c.productCount}</td><td>${c.cheapestStore}</td><td class="text-savings">${formatKYD(c.avgSavings)}</td></tr>`
+          `<tr><td><a href="/category/${c.categorySlug}">${c.category}</a></td><td>${c.productCount}</td><td>${c.cheapestStore}</td><td style="${GREEN} ${TABULAR}">${formatKYD(c.avgSavings)}</td></tr>`
       )
       .join("\n    ")}
   </tbody>
@@ -143,7 +151,7 @@ export function biggestPriceGaps(gaps: PriceGap[], date: string): BlogArticle {
   <li>The biggest single gap is <strong>${formatKYD(gaps[0]?.savings ?? 0)}</strong> on ${gaps[0]?.productName ?? "N/A"}</li>
 </ul>
 
-<p>Use our <a href="/compare">price comparison tool</a> to check any product, or <a href="/prices">browse all ${gaps.length > 0 ? "compared" : ""} products</a>.</p>
+<p>Use our <a href="/compare">price comparison tool</a> to check any product, or <a href="/prices">browse all compared products</a>.</p>
 
 <p><em>Prices as of ${date}. Based on UPC barcode matching across Cayman Islands stores.</em></p>
 `.trim();
@@ -169,6 +177,9 @@ export function storeComparison(data: StoreComparisonData): BlogArticle {
     : 0;
   const bWinPct = 100 - aWinPct;
   const winner = aWinPct >= bWinPct ? storeA : storeB;
+  const loser = winner === storeA ? storeB : storeA;
+  const winnerPct = aWinPct >= bWinPct ? aWinPct : bWinPct;
+  const loserPct = 100 - winnerPct;
   const winnerWins = aWinPct >= bWinPct ? data.storeAWins : data.storeBWins;
   const loserWins = aWinPct >= bWinPct ? data.storeBWins : data.storeAWins;
 
@@ -179,9 +190,9 @@ export function storeComparison(data: StoreComparisonData): BlogArticle {
 <table>
   <thead><tr><th>Metric</th><th>${storeA.storeName}</th><th>${storeB.storeName}</th></tr></thead>
   <tbody>
-    <tr><td>Win Rate</td><td class="${aWinPct >= bWinPct ? "text-savings font-semibold" : ""}">${aWinPct}%</td><td class="${bWinPct > aWinPct ? "text-savings font-semibold" : ""}">${bWinPct}%</td></tr>
+    <tr><td>Win Rate</td><td style="${aWinPct >= bWinPct ? GREEN : ""} ${TABULAR}">${aWinPct}%</td><td style="${bWinPct > aWinPct ? GREEN : ""} ${TABULAR}">${bWinPct}%</td></tr>
     <tr><td>Cheaper On</td><td>${data.storeAWins.length} items</td><td>${data.storeBWins.length} items</td></tr>
-    <tr><td>Avg Price</td><td>${formatKYD(storeA.avgPrice)}</td><td>${formatKYD(storeB.avgPrice)}</td></tr>
+    <tr><td>Avg Price</td><td style="${TABULAR}">${formatKYD(storeA.avgPrice)}</td><td style="${TABULAR}">${formatKYD(storeB.avgPrice)}</td></tr>
     <tr><td>Total Products</td><td>${storeA.totalProducts.toLocaleString()}</td><td>${storeB.totalProducts.toLocaleString()}</td></tr>
   </tbody>
 </table>
@@ -195,7 +206,7 @@ export function storeComparison(data: StoreComparisonData): BlogArticle {
   </tbody>
 </table>
 
-<h2>Where ${winner.storeName === storeA.storeName ? storeB.storeName : storeA.storeName} Wins</h2>
+<h2>Where ${loser.storeName} Wins</h2>
 <p>But it's not one-sided. These products are cheaper at the other store:</p>
 <table>
   <thead><tr><th>Product</th><th>Cheapest</th><th>Other Store</th><th>Savings</th></tr></thead>
@@ -205,7 +216,7 @@ export function storeComparison(data: StoreComparisonData): BlogArticle {
 </table>
 
 <h2>Verdict</h2>
-<p><strong>${winner.storeName}</strong> is cheaper on more items overall, but ${winner.storeName === storeA.storeName ? storeB.storeName : storeA.storeName} beats them on plenty of products. The best strategy? <a href="/compare">Compare prices</a> on the items you actually buy.</p>
+<p><strong>${winner.storeName}</strong> is cheaper on more items overall (${winnerPct}% vs ${loserPct}%), but ${loser.storeName} beats them on plenty of products. The best strategy? <a href="/compare">Compare prices</a> on the items you actually buy.</p>
 
 <p><em>Based on ${data.totalCompared.toLocaleString()} UPC-matched products. Prices updated daily.</em></p>
 `.trim();
@@ -213,7 +224,7 @@ export function storeComparison(data: StoreComparisonData): BlogArticle {
   return {
     slug,
     title: `${storeA.storeName} vs ${storeB.storeName}: Cayman Grocery Price Comparison`,
-    description: `We compared ${data.totalCompared.toLocaleString()} products at ${storeA.storeName} and ${storeB.storeName} in the Cayman Islands. ${winner.storeName} is cheaper ${aWinPct >= bWinPct ? aWinPct : bWinPct}% of the time.`,
+    description: `We compared ${data.totalCompared.toLocaleString()} products at ${storeA.storeName} and ${storeB.storeName} in the Cayman Islands. ${winner.storeName} is cheaper ${winnerPct}% of the time.`,
     content,
     category: "store-comparison",
     tags: [storeA.storeName, storeB.storeName, "store comparison", "cayman groceries"],
@@ -236,7 +247,7 @@ export function categorySpotlight(data: CategorySpotlightData): BlogArticle {
       .sort((a, b) => a.avgPrice - b.avgPrice)
       .map(
         (s, i) =>
-          `<tr><td>${s.storeName}</td><td>${s.productCount}</td><td class="${i === 0 ? "text-savings font-semibold" : ""}">${formatKYD(s.avgPrice)}</td></tr>`
+          `<tr><td>${s.storeName}</td><td>${s.productCount}</td><td style="${i === 0 ? GREEN : ""} ${TABULAR}">${formatKYD(s.avgPrice)}</td></tr>`
       )
       .join("\n    ")}
   </tbody>

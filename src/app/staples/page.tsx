@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ShoppingCart, Check } from "lucide-react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { ShoppingCart, Check, Minus } from "lucide-react";
 import { ProductImage } from "@/components/product-image";
 import { formatKYD } from "@/lib/utils/currency";
 import { StoreBadge } from "@/components/store-badge";
@@ -43,7 +44,17 @@ const STORES = [
   { id: "shopright", name: "Shopright" },
 ];
 
-export default function StaplesPage() {
+export default function StaplesPageWrapper() {
+  return (
+    <Suspense>
+      <StaplesPage />
+    </Suspense>
+  );
+}
+
+function StaplesPage() {
+  const searchParams = useSearchParams();
+  const isAdmin = searchParams.get("admin") === "1";
   const [staples, setStaples] = useState<Staple[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{
@@ -165,7 +176,7 @@ export default function StaplesPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold sm:text-2xl lg:text-3xl">Everyday Staples</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Compare everyday items across stores. Click a price to change the matched product.
+          Compare everyday items across stores.{isAdmin && " Click a price to change the matched product."}
         </p>
       </div>
 
@@ -288,15 +299,17 @@ export default function StaplesPage() {
                         return (
                           <td key={store.id} className="py-3 px-3">
                             {p ? (
-                              <button
-                                onClick={() =>
+                              <div
+                                onClick={isAdmin ? () =>
                                   setEditing({
                                     stapleId: staple.id,
                                     storeId: store.id,
                                     stapleName: staple.name,
-                                  })
+                                  }) : undefined
                                 }
-                                className={`text-left w-full rounded-lg p-2 -m-2 hover:bg-muted transition-colors ${
+                                className={`text-left w-full rounded-lg p-2 -m-2 transition-colors ${
+                                  isAdmin ? "cursor-pointer hover:bg-muted" : ""
+                                } ${
                                   isCheapest
                                     ? "bg-savings/10 ring-1 ring-savings/30"
                                     : ""
@@ -328,13 +341,13 @@ export default function StaplesPage() {
                                     {p.size}
                                   </div>
                                 )}
-                                {p.autoMatched && (
+                                {isAdmin && p.autoMatched && (
                                   <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
                                     auto-matched
                                   </div>
                                 )}
-                              </button>
-                            ) : (
+                              </div>
+                            ) : isAdmin ? (
                               <button
                                 onClick={() =>
                                   setEditing({
@@ -347,6 +360,10 @@ export default function StaplesPage() {
                               >
                                 + Link product
                               </button>
+                            ) : (
+                              <span className="text-muted-foreground/30">
+                                <Minus className="h-4 w-4" />
+                              </span>
                             )}
                           </td>
                         );

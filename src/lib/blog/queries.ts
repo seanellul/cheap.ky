@@ -166,35 +166,58 @@ export async function getPriceDrops(sinceDays = 7, limit = 20): Promise<PriceDro
 
 export async function getCategoryBreakdowns(limit = 15): Promise<CategoryBreakdown[]> {
   const rows = await taggedSql`
-    WITH cat_prices AS (
+    WITH product_prices AS (
       SELECT
-        SPLIT_PART(sp.category_raw, ' / ', 1) AS top_category,
+        CASE
+          WHEN POSITION(' / ' IN sp.category_raw) > 0
+          THEN SPLIT_PART(sp.category_raw, ' / ', 2)
+          ELSE SPLIT_PART(sp.category_raw, ' / ', 1)
+        END AS category,
+        pm.product_id,
         sp.store_id,
-        COALESCE(sp.sale_price, sp.price) AS effective,
-        pm.product_id
+        COALESCE(sp.sale_price, sp.price) AS effective
       FROM store_products sp
       JOIN product_matches pm ON pm.store_product_id = sp.id
-      WHERE sp.price IS NOT NULL AND sp.category_raw IS NOT NULL
+      WHERE sp.price IS NOT NULL
+        AND sp.category_raw IS NOT NULL
+        AND sp.category_raw NOT IN ('Shop')
+    ),
+    product_extremes AS (
+      SELECT
+        category,
+        product_id,
+        MIN(effective) AS min_price,
+        MAX(effective) AS max_price
+      FROM product_prices
+      GROUP BY category, product_id
+      HAVING COUNT(DISTINCT store_id) >= 2
     ),
     cat_stats AS (
       SELECT
-        top_category,
-        COUNT(DISTINCT product_id) AS product_count,
-        ROUND((MAX(effective) - MIN(effective))::numeric, 2) AS avg_savings,
-        (
-          SELECT store_id
-          FROM cat_prices cp2
-          WHERE cp2.top_category = cat_prices.top_category
-          GROUP BY store_id
-          ORDER BY AVG(effective) ASC
-          LIMIT 1
-        ) AS cheapest_store
-      FROM cat_prices
-      GROUP BY top_category
-      HAVING COUNT(DISTINCT store_id) >= 2 AND COUNT(DISTINCT product_id) >= 5
+        pe.category,
+        COUNT(DISTINCT pe.product_id) AS product_count,
+        ROUND(AVG(pe.max_price - pe.min_price)::numeric, 2) AS avg_savings
+      FROM product_extremes pe
+      WHERE pe.max_price > pe.min_price
+      GROUP BY pe.category
+      HAVING COUNT(DISTINCT pe.product_id) >= 5
+    ),
+    cat_cheapest AS (
+      SELECT DISTINCT ON (pp.category)
+        pp.category,
+        pp.store_id
+      FROM product_prices pp
+      GROUP BY pp.category, pp.store_id
+      ORDER BY pp.category, AVG(pp.effective) ASC
     )
-    SELECT * FROM cat_stats
-    ORDER BY avg_savings DESC
+    SELECT
+      cs.category AS top_category,
+      cs.product_count,
+      cs.avg_savings,
+      cc.store_id AS cheapest_store
+    FROM cat_stats cs
+    LEFT JOIN cat_cheapest cc ON cc.category = cs.category
+    ORDER BY cs.avg_savings DESC
     LIMIT ${limit}
   `;
 
@@ -309,6 +332,7 @@ export async function getStoreComparisonData(
 // ── Category Spotlight Data ───────────────────────────────────────────
 
 export async function getCategorySpotlightData(category: string): Promise<CategorySpotlightData | null> {
+  // Match on second-level category (e.g. "Dairy") which can appear as part 1 or part 2
   const rows = await taggedSql`
     WITH cat_products AS (
       SELECT
@@ -320,8 +344,12 @@ export async function getCategorySpotlightData(category: string): Promise<Catego
       FROM store_products sp
       JOIN product_matches pm ON pm.store_product_id = sp.id
       JOIN products p ON p.id = pm.product_id
-      WHERE SPLIT_PART(sp.category_raw, ' / ', 1) = ${category}
+      WHERE (
+        SPLIT_PART(sp.category_raw, ' / ', 2) = ${category}
+        OR SPLIT_PART(sp.category_raw, ' / ', 1) = ${category}
+      )
         AND sp.price IS NOT NULL
+        AND sp.category_raw NOT IN ('Shop')
     )
     SELECT
       store_id,
@@ -350,8 +378,12 @@ export async function getCategorySpotlightData(category: string): Promise<Catego
       FROM store_products sp
       JOIN product_matches pm ON pm.store_product_id = sp.id
       JOIN products p ON p.id = pm.product_id
-      WHERE SPLIT_PART(sp.category_raw, ' / ', 1) = ${category}
+      WHERE (
+        SPLIT_PART(sp.category_raw, ' / ', 2) = ${category}
+        OR SPLIT_PART(sp.category_raw, ' / ', 1) = ${category}
+      )
         AND sp.price IS NOT NULL
+        AND sp.category_raw NOT IN ('Shop')
     ),
     extremes AS (
       SELECT

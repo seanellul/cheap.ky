@@ -114,9 +114,20 @@ export async function GET(request: Request) {
     // Category spotlights
     if (!type || type === "categories") {
       const catRows = await taggedSql`
-        SELECT DISTINCT SPLIT_PART(category_raw, ' / ', 1) AS cat
-        FROM store_products
-        WHERE category_raw IS NOT NULL AND price IS NOT NULL
+        SELECT cat, COUNT(*) AS cnt FROM (
+          SELECT DISTINCT
+            CASE
+              WHEN POSITION(' / ' IN category_raw) > 0
+              THEN SPLIT_PART(category_raw, ' / ', 2)
+              ELSE SPLIT_PART(category_raw, ' / ', 1)
+            END AS cat
+          FROM store_products
+          WHERE category_raw IS NOT NULL
+            AND price IS NOT NULL
+            AND category_raw NOT IN ('Shop')
+        ) sub
+        WHERE cat != '' AND cat != 'Shop'
+        GROUP BY cat
         ORDER BY cat
       `;
       for (const row of catRows as any[]) {

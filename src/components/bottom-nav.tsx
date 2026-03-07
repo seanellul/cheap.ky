@@ -1,13 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, ArrowLeftRight, ListChecks } from "lucide-react";
+import { Search, ShoppingCart, ArrowLeftRight, ListChecks, Heart } from "lucide-react";
 import { useCart } from "@/lib/contexts/cart-context";
+import { useFavourites } from "@/lib/contexts/favourites-context";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", icon: Search, label: "Search" },
   { href: "/compare", icon: ArrowLeftRight, label: "Compare" },
+  { href: "/favourites", icon: Heart, label: "Favourites", showFavBadge: true },
   { href: "/staples", icon: ListChecks, label: "Staples" },
   { href: "/cart", icon: ShoppingCart, label: "Cart", showBadge: true },
 ];
@@ -15,6 +17,7 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const pathname = usePathname();
   const { cartCount } = useCart();
+  const { count: favCount } = useFavourites();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
@@ -44,6 +47,14 @@ export function BottomNav() {
                     )}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
+                  {item.showFavBadge && favCount > 0 && (
+                    <span
+                      key={favCount}
+                      className="absolute -top-1.5 -right-2.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-scale-bounce"
+                    >
+                      {favCount}
+                    </span>
+                  )}
                   {item.showBadge && cartCount > 0 && (
                     <span
                       key={cartCount}

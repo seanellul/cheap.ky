@@ -8,6 +8,7 @@ import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { StalenessBadge, getStalenessInfo } from "@/components/staleness-badge";
+import { FavouriteButton } from "@/components/favourite-button";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -112,20 +113,25 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, priceChan
         </div>
       </div>
 
-      {/* Add to cart button */}
-      {id > 0 && onAddToCart && (
-        <Button
-          size="icon-sm"
-          variant={added ? "secondary" : "outline"}
-          onClick={handleAdd}
-          className={`shrink-0 mt-1 transition-all duration-200 ${added ? "bg-savings/10 border-savings/30" : ""}`}
-        >
-          {added ? (
-            <Check className="h-3.5 w-3.5 text-savings animate-check-pop" />
-          ) : (
-            <ShoppingCart className="h-3.5 w-3.5" />
+      {/* Actions */}
+      {id > 0 && (
+        <div className="flex flex-col items-center gap-0.5 shrink-0 mt-1">
+          <FavouriteButton productId={id} />
+          {onAddToCart && (
+            <Button
+              size="icon-sm"
+              variant={added ? "secondary" : "outline"}
+              onClick={handleAdd}
+              className={`transition-all duration-200 ${added ? "bg-savings/10 border-savings/30" : ""}`}
+            >
+              {added ? (
+                <Check className="h-3.5 w-3.5 text-savings animate-check-pop" />
+              ) : (
+                <ShoppingCart className="h-3.5 w-3.5" />
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
       )}
     </div>
   );

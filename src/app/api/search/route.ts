@@ -11,6 +11,7 @@ function looksLikeBarcode(q: string): boolean {
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
   const sort = req.nextUrl.searchParams.get("sort") || "relevance";
+  const typeFilter = req.nextUrl.searchParams.get("type") || "";
 
   if (q.length < 2) {
     return NextResponse.json({ results: [] });
@@ -111,6 +112,12 @@ export async function GET(req: NextRequest) {
   const searchTerm = `%${q}%`;
 
   // Single efficient query: get matched products with all store prices
+  const matchedParams: (string | number)[] = [searchTerm, sort];
+  const matchedTypeCondition = typeFilter
+    ? `AND sp.category_raw ILIKE $${matchedParams.length + 1}`
+    : "";
+  if (typeFilter) matchedParams.push(`%${typeFilter}%`);
+
   const matched = await rawSql(
     `SELECT
        p.id,
@@ -120,6 +127,7 @@ export async function GET(req: NextRequest) {
        p.image_url,
        MIN(COALESCE(sp.sale_price, sp.price)) AS min_price,
        COUNT(DISTINCT sp.store_id) AS store_count,
+       MAX(sp.category_raw) AS category_raw,
        json_agg(json_build_object(
          'sp_id', sp.id,
          'store_id', sp.store_id,
@@ -133,6 +141,7 @@ export async function GET(req: NextRequest) {
      JOIN store_products sp ON pm.store_product_id = sp.id
      WHERE (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)
        AND sp.price IS NOT NULL
+       ${matchedTypeCondition}
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      ORDER BY
        CASE WHEN $2 = 'price_asc' THEN MIN(COALESCE(sp.sale_price, sp.price)) END ASC NULLS LAST,
@@ -142,10 +151,16 @@ export async function GET(req: NextRequest) {
        COUNT(DISTINCT sp.store_id) DESC,
        p.canonical_name ASC
      LIMIT 50`,
-    [searchTerm, sort]
+    matchedParams
   );
 
   // Also find unmatched store products (single-store items)
+  const unmatchedParams: (string | number)[] = [searchTerm, sort];
+  const unmatchedTypeCondition = typeFilter
+    ? `AND sp.category_raw ILIKE $${unmatchedParams.length + 1}`
+    : "";
+  if (typeFilter) unmatchedParams.push(`%${typeFilter}%`);
+
   const unmatched = await rawSql(
     `SELECT
        sp.id,
@@ -157,10 +172,12 @@ export async function GET(req: NextRequest) {
        sp.price,
        sp.sale_price,
        sp.updated_at,
+       sp.category_raw,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
      WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
        AND sp.price IS NOT NULL
+       ${unmatchedTypeCondition}
        AND NOT EXISTS (
          SELECT 1 FROM product_matches pm WHERE pm.store_product_id = sp.id
        )
@@ -169,7 +186,7 @@ export async function GET(req: NextRequest) {
        CASE WHEN $2 = 'price_desc' THEN COALESCE(sp.sale_price, sp.price) END DESC NULLS LAST,
        sp.name ASC
      LIMIT 30`,
-    [searchTerm, sort]
+    unmatchedParams
   );
 
   const results = [];
@@ -213,6 +230,7 @@ export async function GET(req: NextRequest) {
       imageUrl: row.image_url as string | null,
       minPrice: row.min_price != null ? Number(row.min_price) : null,
       storeCount: Number(row.store_count),
+      categoryRaw: row.category_raw as string | null,
       prices,
       priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,
     });
@@ -233,6 +251,7 @@ export async function GET(req: NextRequest) {
       imageUrl: sp.image_url as string | null,
       minPrice: sp.min_price != null ? Number(sp.min_price) : null,
       storeCount: 1,
+      categoryRaw: sp.category_raw as string | null,
       prices: {
         [storeId]: {
           price: sp.price != null ? Number(sp.price) : null,
@@ -264,5 +283,21 @@ export async function GET(req: NextRequest) {
     results.sort((a, b) => (b.minPrice ?? 0) - (a.minPrice ?? 0));
   }
 
-  return NextResponse.json({ results: results.slice(0, 50) });
+  // Aggregate available product types for the current search (ignoring active type filter)
+  const typesRows = await rawSql(
+    `SELECT
+       REPLACE(REPLACE(REPLACE(sp.category_raw, 'Shop / Grocery / ', ''), 'Shop / HBC / ', ''), 'Shop / ', '') AS label,
+       COUNT(*) AS cnt
+     FROM store_products sp
+     WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
+       AND sp.price IS NOT NULL
+       AND sp.category_raw IS NOT NULL
+     GROUP BY label
+     ORDER BY cnt DESC
+     LIMIT 10`,
+    [searchTerm]
+  );
+  const types = typesRows.map((r) => String(r.label));
+
+  return NextResponse.json({ results: results.slice(0, 50), types });
 }

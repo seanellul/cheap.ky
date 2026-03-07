@@ -1,3 +1,5 @@
+export const revalidate = 3600;
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -47,7 +49,7 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const data = getProductBySlug(slug);
+  const data = await getProductBySlug(slug);
   if (!data) return { title: "Product Not Found" };
 
   const { product, storePrices } = data;
@@ -83,7 +85,7 @@ export async function generateMetadata({
 
 export default async function ProductPricePage({ params }: PageProps) {
   const { slug } = await params;
-  const data = getProductBySlug(slug);
+  const data = await getProductBySlug(slug);
   if (!data) notFound();
 
   const { product, storePrices, history, categoryRaw } = data;
@@ -126,7 +128,7 @@ export default async function ProductPricePage({ params }: PageProps) {
   const topCategory = categoryParts.length >= 2 ? categoryParts[1] : null;
 
   // Related products
-  const related = getRelatedProducts(product.id, categoryRaw, 8);
+  const related = await getRelatedProducts(product.id, categoryRaw, 8);
 
   // Price history summary
   const hasHistory = history.length > 0;

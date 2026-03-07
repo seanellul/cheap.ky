@@ -1,12 +1,5 @@
-import Database from "better-sqlite3";
-import path from "path";
+import { rawSql } from "@/lib/db";
 import { productToSlug } from "@/lib/utils/slug";
-
-const dbPath = path.join(process.cwd(), "data", "price-comp.db");
-
-function getDb() {
-  return new Database(dbPath, { readonly: true });
-}
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -35,7 +28,7 @@ export interface StorePriceRow {
 export interface PriceHistoryRow {
   price: number | null;
   sale_price: number | null;
-  recorded_at: number;
+  recorded_at: string;
   store_id: string;
 }
 
@@ -71,230 +64,186 @@ export interface ProductListItem {
 
 // ── Queries ────────────────────────────────────────────────────────────
 
-export function getProductBySlug(slug: string): ProductData | null {
+export async function getProductBySlug(slug: string): Promise<ProductData | null> {
   // Extract product ID from slug suffix
   const match = slug.match(/-(\d+)$/);
   if (!match) return null;
   const productId = parseInt(match[1], 10);
 
-  const db = getDb();
-  try {
-    const product = db
-      .prepare(
-        `SELECT id, canonical_name, brand, category_id, upc, size, image_url
-         FROM products WHERE id = ?`
-      )
-      .get(productId) as ProductRow | undefined;
+  const products = await rawSql(
+    `SELECT id, canonical_name, brand, category_id, upc, size, image_url
+     FROM products WHERE id = $1`,
+    [productId]
+  );
 
-    if (!product) return null;
+  if (products.length === 0) return null;
+  const product = products[0] as unknown as ProductRow;
 
-    // Verify slug matches (prevents /prices/wrong-name-123 from working)
-    if (productToSlug(product.canonical_name, product.id) !== slug) {
-      return null;
-    }
-
-    const storePrices = db
-      .prepare(
-        `SELECT sp.store_id, sp.name, sp.price, sp.sale_price,
-                sp.size, sp.image_url, sp.source_url, sp.upc, sp.category_raw
-         FROM product_matches pm
-         JOIN store_products sp ON pm.store_product_id = sp.id
-         WHERE pm.product_id = ?`
-      )
-      .all(productId) as StorePriceRow[];
-
-    const history = db
-      .prepare(
-        `SELECT ph.price, ph.sale_price, ph.recorded_at, sp.store_id
-         FROM price_history ph
-         JOIN store_products sp ON ph.store_product_id = sp.id
-         JOIN product_matches pm ON pm.store_product_id = sp.id
-         WHERE pm.product_id = ?
-         ORDER BY ph.recorded_at ASC`
-      )
-      .all(productId) as PriceHistoryRow[];
-
-    // Get best category_raw from any matched store product
-    const categoryRaw =
-      storePrices.find((sp) => sp.category_raw)?.category_raw ?? null;
-
-    return { product, storePrices, history, categoryRaw };
-  } finally {
-    db.close();
+  // Verify slug matches
+  if (productToSlug(product.canonical_name, product.id) !== slug) {
+    return null;
   }
+
+  const storePrices = await rawSql(
+    `SELECT sp.store_id, sp.name, sp.price, sp.sale_price,
+            sp.size, sp.image_url, sp.source_url, sp.upc, sp.category_raw
+     FROM product_matches pm
+     JOIN store_products sp ON pm.store_product_id = sp.id
+     WHERE pm.product_id = $1`,
+    [productId]
+  ) as unknown as StorePriceRow[];
+
+  const history = await rawSql(
+    `SELECT ph.price, ph.sale_price, ph.recorded_at, sp.store_id
+     FROM price_history ph
+     JOIN store_products sp ON ph.store_product_id = sp.id
+     JOIN product_matches pm ON pm.store_product_id = sp.id
+     WHERE pm.product_id = $1
+     ORDER BY ph.recorded_at ASC`,
+    [productId]
+  ) as unknown as PriceHistoryRow[];
+
+  const categoryRaw =
+    storePrices.find((sp) => sp.category_raw)?.category_raw ?? null;
+
+  return { product, storePrices, history, categoryRaw };
 }
 
-export function getRelatedProducts(
+export async function getRelatedProducts(
   productId: number,
   categoryRaw: string | null,
   limit: number = 8
-): RelatedProduct[] {
+): Promise<RelatedProduct[]> {
   if (!categoryRaw) return [];
 
-  const db = getDb();
-  try {
-    // Extract a top-level category from the raw category path
-    // e.g. "Shop / Meat / Bacon" → "Meat"
-    const parts = categoryRaw.split("/").map((s) => s.trim());
-    const topCategory = parts.length >= 2 ? parts[1] : parts[0];
+  const parts = categoryRaw.split("/").map((s) => s.trim());
+  const topCategory = parts.length >= 2 ? parts[1] : parts[0];
 
-    const rows = db
-      .prepare(
-        `SELECT p.id, p.canonical_name, p.brand, p.size, p.image_url,
-                COUNT(DISTINCT sp.store_id) as store_count,
-                MIN(COALESCE(sp.sale_price, sp.price)) as min_price
-         FROM products p
-         JOIN product_matches pm ON pm.product_id = p.id
-         JOIN store_products sp ON pm.store_product_id = sp.id
-         WHERE sp.category_raw LIKE ?
-           AND p.id != ?
-         GROUP BY p.id
-         HAVING store_count >= 2
-         ORDER BY store_count DESC, min_price ASC
-         LIMIT ?`
-      )
-      .all(`%${topCategory}%`, productId, limit) as Array<
-      ProductRow & { store_count: number; min_price: number | null }
-    >;
+  const rows = await rawSql(
+    `SELECT p.id, p.canonical_name, p.brand, p.size, p.image_url,
+            COUNT(DISTINCT sp.store_id) as store_count,
+            MIN(COALESCE(sp.sale_price, sp.price)) as min_price
+     FROM products p
+     JOIN product_matches pm ON pm.product_id = p.id
+     JOIN store_products sp ON pm.store_product_id = sp.id
+     WHERE sp.category_raw LIKE $1
+       AND p.id != $2
+     GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
+     HAVING COUNT(DISTINCT sp.store_id) >= 2
+     ORDER BY COUNT(DISTINCT sp.store_id) DESC, MIN(COALESCE(sp.sale_price, sp.price)) ASC
+     LIMIT $3`,
+    [`%${topCategory}%`, productId, limit]
+  );
 
-    return rows.map((r) => ({
-      id: r.id,
-      canonical_name: r.canonical_name,
-      brand: r.brand,
-      size: r.size,
-      image_url: r.image_url,
-      slug: productToSlug(r.canonical_name, r.id),
-      store_count: r.store_count,
-      min_price: r.min_price,
-    }));
-  } finally {
-    db.close();
-  }
+  return rows.map((r: Record<string, unknown>) => ({
+    id: Number(r.id),
+    canonical_name: String(r.canonical_name),
+    brand: r.brand as string | null,
+    size: r.size as string | null,
+    image_url: r.image_url as string | null,
+    slug: productToSlug(String(r.canonical_name), Number(r.id)),
+    store_count: Number(r.store_count),
+    min_price: r.min_price != null ? Number(r.min_price) : null,
+  }));
 }
 
-export function getProductSlugs(): string[] {
-  const db = getDb();
-  try {
-    const rows = db
-      .prepare(
-        `SELECT p.id, p.canonical_name
-         FROM products p
-         WHERE EXISTS (
-           SELECT 1 FROM product_matches pm WHERE pm.product_id = p.id
-         )`
-      )
-      .all() as Array<{ id: number; canonical_name: string }>;
+export async function getProductSlugs(): Promise<string[]> {
+  const rows = await rawSql(
+    `SELECT p.id, p.canonical_name
+     FROM products p
+     WHERE EXISTS (
+       SELECT 1 FROM product_matches pm WHERE pm.product_id = p.id
+     )`
+  );
 
-    return rows.map((r) => productToSlug(r.canonical_name, r.id));
-  } finally {
-    db.close();
-  }
+  return rows.map((r: Record<string, unknown>) => productToSlug(String(r.canonical_name), Number(r.id)));
 }
 
 // ── Products index / listing ───────────────────────────────────────────
 
-export function getTopCategories(): string[] {
-  const db = getDb();
-  try {
-    const rows = db
-      .prepare(
-        `SELECT DISTINCT
-           TRIM(SUBSTR(
-             SUBSTR(category_raw, INSTR(category_raw, '/ ') + 2),
-             1,
-             CASE
-               WHEN INSTR(SUBSTR(category_raw, INSTR(category_raw, '/ ') + 2), ' /') > 0
-               THEN INSTR(SUBSTR(category_raw, INSTR(category_raw, '/ ') + 2), ' /') - 1
-               ELSE LENGTH(SUBSTR(category_raw, INSTR(category_raw, '/ ') + 2))
-             END
-           )) as category
-         FROM store_products
-         WHERE category_raw IS NOT NULL AND category_raw LIKE 'Shop / %'
-         ORDER BY category`
-      )
-      .all() as Array<{ category: string }>;
+export async function getTopCategories(): Promise<string[]> {
+  const rows = await rawSql(
+    `SELECT DISTINCT
+       TRIM(SUBSTRING(
+         SUBSTRING(category_raw FROM POSITION('/ ' IN category_raw) + 2),
+         1,
+         CASE
+           WHEN POSITION(' /' IN SUBSTRING(category_raw FROM POSITION('/ ' IN category_raw) + 2)) > 0
+           THEN POSITION(' /' IN SUBSTRING(category_raw FROM POSITION('/ ' IN category_raw) + 2)) - 1
+           ELSE LENGTH(SUBSTRING(category_raw FROM POSITION('/ ' IN category_raw) + 2))
+         END
+       )) as category
+     FROM store_products
+     WHERE category_raw IS NOT NULL AND category_raw LIKE 'Shop / %'
+     ORDER BY category`
+  );
 
-    return rows
-      .map((r) => r.category)
-      .filter((c) => c.length > 0 && c.length < 40);
-  } finally {
-    db.close();
-  }
+  return rows
+    .map((r: Record<string, unknown>) => String(r.category))
+    .filter((c: string) => c.length > 0 && c.length < 40);
 }
 
-export function getProductList(options: {
+export async function getProductList(options: {
   page?: number;
   perPage?: number;
   category?: string;
   search?: string;
-}): { products: ProductListItem[]; total: number } {
+}): Promise<{ products: ProductListItem[]; total: number }> {
   const { page = 1, perPage = 48, category, search } = options;
   const offset = (page - 1) * perPage;
 
-  const db = getDb();
-  try {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+  let paramIdx = 1;
 
-    if (search && search.length >= 2) {
-      conditions.push("p.canonical_name LIKE ?");
-      params.push(`%${search}%`);
-    }
-
-    if (category) {
-      conditions.push("sp.category_raw LIKE ?");
-      params.push(`%${category}%`);
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    const countRow = db
-      .prepare(
-        `SELECT COUNT(DISTINCT p.id) as total
-         FROM products p
-         JOIN product_matches pm ON pm.product_id = p.id
-         JOIN store_products sp ON pm.store_product_id = sp.id
-         ${whereClause}`
-      )
-      .get(...params) as { total: number };
-
-    const rows = db
-      .prepare(
-        `SELECT p.id, p.canonical_name, p.brand, p.size, p.image_url,
-                COUNT(DISTINCT sp.store_id) as store_count,
-                MIN(COALESCE(sp.sale_price, sp.price)) as min_price,
-                MAX(sp.category_raw) as category_raw
-         FROM products p
-         JOIN product_matches pm ON pm.product_id = p.id
-         JOIN store_products sp ON pm.store_product_id = sp.id
-         ${whereClause}
-         GROUP BY p.id
-         ORDER BY store_count DESC, p.canonical_name ASC
-         LIMIT ? OFFSET ?`
-      )
-      .all(...params, perPage, offset) as Array<
-      ProductRow & {
-        store_count: number;
-        min_price: number | null;
-        category_raw: string | null;
-      }
-    >;
-
-    const products = rows.map((r) => ({
-      id: r.id,
-      canonical_name: r.canonical_name,
-      brand: r.brand,
-      size: r.size,
-      image_url: r.image_url,
-      slug: productToSlug(r.canonical_name, r.id),
-      store_count: r.store_count,
-      min_price: r.min_price,
-      category_raw: r.category_raw,
-    }));
-
-    return { products, total: countRow.total };
-  } finally {
-    db.close();
+  if (search && search.length >= 2) {
+    conditions.push(`p.canonical_name ILIKE $${paramIdx++}`);
+    params.push(`%${search}%`);
   }
+
+  if (category) {
+    conditions.push(`sp.category_raw ILIKE $${paramIdx++}`);
+    params.push(`%${category}%`);
+  }
+
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  const [countRow] = await rawSql(
+    `SELECT COUNT(DISTINCT p.id) as total
+     FROM products p
+     JOIN product_matches pm ON pm.product_id = p.id
+     JOIN store_products sp ON pm.store_product_id = sp.id
+     ${whereClause}`,
+    params
+  );
+
+  const rows = await rawSql(
+    `SELECT p.id, p.canonical_name, p.brand, p.size, p.image_url,
+            COUNT(DISTINCT sp.store_id) as store_count,
+            MIN(COALESCE(sp.sale_price, sp.price)) as min_price,
+            MAX(sp.category_raw) as category_raw
+     FROM products p
+     JOIN product_matches pm ON pm.product_id = p.id
+     JOIN store_products sp ON pm.store_product_id = sp.id
+     ${whereClause}
+     GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
+     ORDER BY COUNT(DISTINCT sp.store_id) DESC, p.canonical_name ASC
+     LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    [...params, perPage, offset]
+  );
+
+  const products = rows.map((r: Record<string, unknown>) => ({
+    id: Number(r.id),
+    canonical_name: String(r.canonical_name),
+    brand: r.brand as string | null,
+    size: r.size as string | null,
+    image_url: r.image_url as string | null,
+    slug: productToSlug(String(r.canonical_name), Number(r.id)),
+    store_count: Number(r.store_count),
+    min_price: r.min_price != null ? Number(r.min_price) : null,
+    category_raw: r.category_raw as string | null,
+  }));
+
+  return { products, total: Number(countRow.total) };
 }

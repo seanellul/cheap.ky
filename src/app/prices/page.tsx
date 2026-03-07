@@ -1,3 +1,5 @@
+export const revalidate = 3600;
+
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getProductList, getTopCategories } from "@/lib/data/products";
@@ -30,14 +32,14 @@ export default async function PricesIndexPage({ searchParams }: PageProps) {
   const search = sp.q || undefined;
   const perPage = 48;
 
-  const { products, total } = getProductList({
+  const { products, total } = await getProductList({
     page,
     perPage,
     category,
     search,
   });
   const totalPages = Math.ceil(total / perPage);
-  const categories = getTopCategories();
+  const categories = await getTopCategories();
 
   // Build URL helper for pagination
   function pageUrl(p: number): string {

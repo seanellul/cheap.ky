@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { HeaderCartBadge } from "@/components/header-cart-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
+import { NavLink } from "@/components/nav-link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,6 +42,9 @@ export const metadata: Metadata = {
     "save money groceries Cayman",
   ],
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+  },
   metadataBase: new URL("https://cheap.ky"),
   openGraph: {
     type: "website",
@@ -67,7 +71,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d7377",
+  themeColor: "#1a7a7e",
   viewportFit: "cover",
 };
 
@@ -106,16 +110,16 @@ export default function RootLayout({
           <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-sm">
             <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-3">
               <a href="/" className="flex items-center gap-2">
-                <BrandLogo />
+                <BrandLogo showIcon />
               </a>
-              <nav className="hidden md:flex items-center gap-6 text-sm">
-                <a href="/" className="text-muted-foreground hover:text-primary transition-colors">Search</a>
-                <a href="/prices" className="text-muted-foreground hover:text-primary transition-colors">Prices</a>
-                <a href="/compare" className="text-muted-foreground hover:text-primary transition-colors">Compare</a>
-                <a href="/report" className="text-muted-foreground hover:text-primary transition-colors">Report</a>
-                <a href="/staples" className="text-muted-foreground hover:text-primary transition-colors">Staples</a>
-                <a href="/cart" className="text-muted-foreground hover:text-primary transition-colors">Cart</a>
-                <a href="/admin/ingest" className="text-muted-foreground hover:text-primary transition-colors">Admin</a>
+              <nav className="hidden md:flex items-center gap-1 text-sm">
+                <NavLink href="/">Search</NavLink>
+                <NavLink href="/compare">Compare</NavLink>
+                <NavLink href="/report">Report</NavLink>
+                <NavLink href="/staples">Staples</NavLink>
+                <NavLink href="/blog">Blog</NavLink>
+                <NavLink href="/cart">Cart</NavLink>
+                <NavLink href="/admin/ingest">Admin</NavLink>
                 <HeaderCartBadge />
                 <ThemeToggle />
               </nav>

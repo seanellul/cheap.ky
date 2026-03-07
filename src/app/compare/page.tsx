@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
+import { CompareCard } from "@/components/compare-card";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright"] as const;
 
@@ -176,21 +177,38 @@ export default function ComparePage() {
         </div>
       ) : (
         <>
-          <div className="border rounded-xl overflow-x-auto">
-            <table className="w-full min-w-[640px]">
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-2">
+            {items.map((item) => (
+              <CompareCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                brand={item.brand}
+                size={item.size}
+                imageUrl={item.imageUrl}
+                minPrice={item.minPrice}
+                maxPrice={item.maxPrice}
+                savings={item.savings}
+                prices={item.prices}
+                onClick={() => setSelectedProductId(item.id)}
+              />
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block border rounded-xl overflow-hidden">
+            <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/40">
                   <th className="py-2.5 px-3 text-left text-sm font-medium max-w-[300px]">Product</th>
                   {STORE_IDS.map((id) => (
-                    <th key={id} className="py-2.5 px-2 text-center text-sm font-medium hidden sm:table-cell">
+                    <th key={id} className="py-2.5 px-2 text-center text-sm font-medium">
                       <StoreBadge storeId={id} />
                     </th>
                   ))}
                   <th className="py-2.5 px-2 text-center text-sm font-medium">Best</th>
-                  <th className="py-2.5 px-2 text-right text-sm font-medium w-20">
-                    <span className="hidden sm:inline">You Save</span>
-                    <span className="sm:hidden">Save</span>
-                  </th>
+                  <th className="py-2.5 px-2 text-right text-sm font-medium w-20">You Save</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,13 +231,6 @@ export default function ComparePage() {
                             <div className="text-xs text-muted-foreground truncate">
                               {[item.brand, item.size].filter(Boolean).join(" - ")}
                             </div>
-                            {/* Mobile: show cheapest store + price */}
-                            {cheapest && (
-                              <div className="sm:hidden text-xs mt-0.5">
-                                <span className="font-bold text-savings">{formatKYD(item.minPrice)}</span>
-                                {" "}at <StoreBadge storeId={cheapest} />
-                              </div>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -227,7 +238,7 @@ export default function ComparePage() {
                         const p = item.prices[storeId];
                         const isCheapest = storeId === cheapest;
                         return (
-                          <td key={storeId} className="py-3 px-2 text-center text-sm hidden sm:table-cell">
+                          <td key={storeId} className="py-3 px-2 text-center text-sm">
                             <PriceDisplay
                               price={p?.price ?? null}
                               salePrice={p?.salePrice ?? null}
@@ -236,7 +247,7 @@ export default function ComparePage() {
                           </td>
                         );
                       })}
-                      <td className="py-3 px-2 text-center hidden sm:table-cell">
+                      <td className="py-3 px-2 text-center">
                         {cheapest && (
                           <div>
                             <div className="text-sm font-bold text-savings tabular-nums">

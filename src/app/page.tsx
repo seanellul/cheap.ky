@@ -13,6 +13,7 @@ import { SearchResultSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { BrandLogo } from "@/components/brand-logo";
+import { FreshnessBadge } from "@/components/freshness-badge";
 import { useCart } from "@/lib/contexts/cart-context";
 
 interface SearchResult {
@@ -61,9 +62,12 @@ export default function HomePage() {
           <p className="text-muted-foreground text-sm mt-2 sm:text-base">
             Don&apos;t just shop &mdash; be <span className="font-semibold text-foreground">Cheap.ky</span>
           </p>
-          <p className="text-muted-foreground/70 text-xs mt-1 sm:text-sm">
-            Compare prices across 5 Cayman grocery stores
-          </p>
+          <div className="flex items-center gap-3 mt-1.5">
+            <p className="text-muted-foreground/70 text-xs sm:text-sm">
+              Compare prices across Cayman grocery stores
+            </p>
+            <FreshnessBadge />
+          </div>
         </div>
       </div>
 

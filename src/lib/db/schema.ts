@@ -1,24 +1,23 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import { pgTable, text, integer, serial, real, uniqueIndex, boolean, timestamp } from "drizzle-orm/pg-core";
 
-export const stores = sqliteTable("stores", {
+export const stores = pgTable("stores", {
   id: text("id").primaryKey(), // slug: fosters, hurleys, kirkmarket, costuless
   name: text("name").notNull(),
   website: text("website").notNull(),
   sourceType: text("source_type").notNull(), // api, playwright, csv
-  lastIngestedAt: integer("last_ingested_at", { mode: "timestamp" }),
+  lastIngestedAt: timestamp("last_ingested_at"),
 });
 
-export const categories = sqliteTable("categories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
 });
 
-export const storeProducts = sqliteTable(
+export const storeProducts = pgTable(
   "store_products",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     storeId: text("store_id")
       .notNull()
       .references(() => stores.id),
@@ -34,38 +33,38 @@ export const storeProducts = sqliteTable(
     categoryRaw: text("category_raw"),
     categoryId: integer("category_id").references(() => categories.id),
     imageUrl: text("image_url"),
-    inStock: integer("in_stock", { mode: "boolean" }).default(true),
+    inStock: boolean("in_stock").default(true),
     sourceUrl: text("source_url"),
     rawData: text("raw_data"), // JSON blob
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at")
       .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .defaultNow(),
+    updatedAt: timestamp("updated_at")
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("store_sku_idx").on(table.storeId, table.sku),
   ]
 );
 
-export const products = sqliteTable("products", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
   canonicalName: text("canonical_name").notNull(),
   brand: text("brand"),
   categoryId: integer("category_id").references(() => categories.id),
   upc: text("upc"),
   size: text("size"),
   imageUrl: text("image_url"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const productMatches = sqliteTable(
+export const productMatches = pgTable(
   "product_matches",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     productId: integer("product_id")
       .notNull()
       .references(() => products.id),
@@ -74,30 +73,30 @@ export const productMatches = sqliteTable(
       .references(() => storeProducts.id),
     matchMethod: text("match_method").notNull(), // upc, fuzzy_name, manual, ai
     confidence: real("confidence").notNull().default(1.0),
-    verified: integer("verified", { mode: "boolean" }).default(false),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    verified: boolean("verified").default(false),
+    createdAt: timestamp("created_at")
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("match_store_product_idx").on(table.storeProductId),
   ]
 );
 
-export const priceHistory = sqliteTable("price_history", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const priceHistory = pgTable("price_history", {
+  id: serial("id").primaryKey(),
   storeProductId: integer("store_product_id")
     .notNull()
     .references(() => storeProducts.id),
   price: real("price"),
   salePrice: real("sale_price"),
-  recordedAt: integer("recorded_at", { mode: "timestamp" })
+  recordedAt: timestamp("recorded_at")
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const cartItems = sqliteTable("cart_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
   productId: integer("product_id")
     .notNull()
     .references(() => products.id),
@@ -106,8 +105,8 @@ export const cartItems = sqliteTable("cart_items", {
   notes: text("notes"),
 });
 
-export const smartCartItems = sqliteTable("smart_cart_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const smartCartItems = pgTable("smart_cart_items", {
+  id: serial("id").primaryKey(),
   stapleId: integer("staple_id")
     .notNull()
     .references(() => staples.id)
@@ -115,19 +114,19 @@ export const smartCartItems = sqliteTable("smart_cart_items", {
   quantity: integer("quantity").notNull().default(1),
 });
 
-export const shoppingLists = sqliteTable("shopping_lists", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const shoppingLists = pgTable("shopping_lists", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const shoppingListItems = sqliteTable("shopping_list_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const shoppingListItems = pgTable("shopping_list_items", {
+  id: serial("id").primaryKey(),
   listId: integer("list_id")
     .notNull()
     .references(() => shoppingLists.id),
@@ -138,9 +137,24 @@ export const shoppingListItems = sqliteTable("shopping_list_items", {
   notes: text("notes"),
 });
 
+// Blog posts (programmatically generated from price data)
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull(), // meta description
+  content: text("content").notNull(), // HTML content
+  category: text("category").notNull(), // weekly-report, price-gaps, store-comparison, category-spotlight, etc.
+  tags: text("tags"), // JSON array
+  coverImage: text("cover_image"),
+  publishedAt: timestamp("published_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  dataSnapshot: text("data_snapshot"), // JSON blob of data used to generate the article (for regeneration)
+});
+
 // Curated staple/commodity items for cross-store comparison
-export const staples = sqliteTable("staples", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const staples = pgTable("staples", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(), // e.g. "Chicken Wings (Fresh)"
   category: text("category").notNull(), // e.g. "Meat & Poultry"
   keywords: text("keywords").notNull(), // JSON array of search terms
@@ -148,10 +162,10 @@ export const staples = sqliteTable("staples", {
 });
 
 // Links a staple to the best representative product at each store
-export const stapleProducts = sqliteTable(
+export const stapleProducts = pgTable(
   "staple_products",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     stapleId: integer("staple_id")
       .notNull()
       .references(() => staples.id),
@@ -161,10 +175,10 @@ export const stapleProducts = sqliteTable(
     storeId: text("store_id")
       .notNull()
       .references(() => stores.id),
-    autoMatched: integer("auto_matched", { mode: "boolean" }).default(true),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    autoMatched: boolean("auto_matched").default(true),
+    createdAt: timestamp("created_at")
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("staple_store_idx").on(table.stapleId, table.storeId),

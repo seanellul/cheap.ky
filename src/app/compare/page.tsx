@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { PriceChangeIndicator } from "@/components/price-change-indicator";
+import { StalenessBadge } from "@/components/staleness-badge";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
@@ -26,7 +27,7 @@ interface CompareItem {
   maxPrice: number;
   savings: number;
   categoryRaw: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; updatedAt?: string | null }>;
   priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
@@ -258,6 +259,7 @@ export default function ComparePage() {
                                   amount={item.priceChanges[storeId].amount}
                                 />
                               )}
+                              {p && <StalenessBadge updatedAt={p.updatedAt} />}
                             </div>
                           </td>
                         );

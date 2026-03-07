@@ -23,6 +23,7 @@ export async function GET() {
         salePrice: storeProducts.salePrice,
         size: storeProducts.size,
         imageUrl: storeProducts.imageUrl,
+        updatedAt: storeProducts.updatedAt,
       })
       .from(stapleProducts)
       .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
@@ -38,6 +39,7 @@ export async function GET() {
         size: string | null;
         imageUrl: string | null;
         autoMatched: boolean | null;
+        updatedAt: string | null;
       }
     > = {};
 
@@ -51,6 +53,7 @@ export async function GET() {
         size: link.size,
         imageUrl: link.imageUrl,
         autoMatched: link.autoMatched,
+        updatedAt: link.updatedAt ? link.updatedAt.toISOString() : null,
       };
       allSpIds.push(link.productId);
       spIdMapping.push({ resultIdx, storeId: link.storeId, spId: link.productId });

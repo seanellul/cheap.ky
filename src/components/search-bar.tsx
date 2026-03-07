@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Search, Loader2, ArrowUpDown, ScanBarcode } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { addSearchEntry } from "@/lib/history";
 
@@ -42,6 +42,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [types, setTypes] = useState<string[]>([]);
+  const [activeType, setActiveType] = useState<string | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,11 +51,12 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     setIsMobile(window.innerWidth < 768 && /Mobi|Android/i.test(navigator.userAgent));
   }, []);
 
-  function doSearch(q: string, s: SortOption) {
+  function doSearch(q: string, s: SortOption, type: string | null) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (q.length < 2) {
       onResults([]);
+      setTypes([]);
       setLoading(false);
       onLoadingChange?.(false);
       return;
@@ -64,10 +67,13 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&sort=${s}`);
+        let url = `/api/search?q=${encodeURIComponent(q)}&sort=${s}`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
+        const res = await fetch(url);
         const data = await res.json();
         const results = data.results || [];
         onResults(results);
+        if (data.types) setTypes(data.types);
         if (results.length > 0) {
           addSearchEntry(q, results.length);
         }
@@ -81,14 +87,15 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   }
 
   useEffect(() => {
-    doSearch(query, sort);
+    doSearch(query, sort, activeType);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, sort]);
+  }, [query, sort, activeType]);
 
   function handleQueryChange(q: string) {
     setQuery(q);
+    setActiveType(null);
     onQueryChange?.(q);
   }
 
@@ -168,6 +175,38 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
                 }`}
               >
                 {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Type filter pills */}
+      {types.length > 0 && query.length >= 2 && (
+        <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setActiveType(null)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
+                activeType === null
+                  ? "bg-foreground/10 text-foreground ring-1 ring-foreground/20"
+                  : "bg-transparent text-muted-foreground ring-1 ring-border hover:bg-muted/50"
+              }`}
+            >
+              All
+            </button>
+            {types.map((type) => (
+              <button
+                key={type}
+                onClick={() => setActiveType(activeType === type ? null : type)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
+                  activeType === type
+                    ? "bg-foreground/10 text-foreground ring-1 ring-foreground/20"
+                    : "bg-transparent text-muted-foreground ring-1 ring-border hover:bg-muted/50"
+                }`}
+              >
+                {type}
               </button>
             ))}
           </div>

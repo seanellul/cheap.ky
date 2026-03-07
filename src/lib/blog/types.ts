@@ -5,6 +5,23 @@ export interface BlogArticle {
   content: string; // HTML
   category: string;
   tags: string[];
+  faq?: { question: string; answer: string }[]; // for FAQ schema
+}
+
+export interface BasketItem {
+  productName: string;
+  productSlug: string;
+  prices: { storeName: string; storeId: string; price: number }[];
+  cheapestStore: string;
+  cheapestPrice: number;
+}
+
+export interface CheapestStoreData {
+  storeSummaries: StoreSummary[];
+  totalMatched: number;
+  topGaps: PriceGap[];
+  basket: BasketItem[];
+  basketTotals: { storeName: string; storeId: string; total: number }[];
 }
 
 // Data shapes passed into templates

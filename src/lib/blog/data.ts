@@ -12,6 +12,7 @@ export interface BlogPostSummary {
 
 export interface BlogPostFull extends BlogPostSummary {
   content: string;
+  faq: { question: string; answer: string }[];
 }
 
 export async function getBlogPosts(limit = 50, offset = 0): Promise<BlogPostSummary[]> {
@@ -35,7 +36,7 @@ export async function getBlogPosts(limit = 50, offset = 0): Promise<BlogPostSumm
 
 export async function getBlogPost(slug: string): Promise<BlogPostFull | null> {
   const rows = await taggedSql`
-    SELECT slug, title, description, content, category, tags, published_at, updated_at
+    SELECT slug, title, description, content, category, tags, published_at, updated_at, data_snapshot
     FROM blog_posts
     WHERE slug = ${slug}
     LIMIT 1
@@ -43,6 +44,17 @@ export async function getBlogPost(slug: string): Promise<BlogPostFull | null> {
 
   const r = (rows as any[])[0];
   if (!r) return null;
+
+  // Extract FAQ from data_snapshot if present
+  let faq: { question: string; answer: string }[] = [];
+  if (r.data_snapshot) {
+    try {
+      const snapshot = JSON.parse(r.data_snapshot);
+      if (Array.isArray(snapshot.faq)) faq = snapshot.faq;
+    } catch {
+      // ignore parse errors
+    }
+  }
 
   return {
     slug: r.slug,
@@ -53,6 +65,7 @@ export async function getBlogPost(slug: string): Promise<BlogPostFull | null> {
     tags: r.tags ? JSON.parse(r.tags) : [],
     publishedAt: r.published_at,
     updatedAt: r.updated_at,
+    faq,
   };
 }
 

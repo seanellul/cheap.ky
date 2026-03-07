@@ -42,21 +42,61 @@ export default async function BlogPostPage({ params }: PageProps) {
     .filter((p) => p.slug !== slug && p.category === post.category)
     .slice(0, 4);
 
-  // JSON-LD
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.description,
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt,
-    publisher: {
-      "@type": "Organization",
-      name: "Cheap.ky",
-      url: "https://cheap.ky",
+  // JSON-LD: Article + BreadcrumbList + optional FAQ
+  const jsonLd: object[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: post.title,
+      description: post.description,
+      datePublished: post.publishedAt,
+      dateModified: post.updatedAt,
+      author: {
+        "@type": "Organization",
+        name: "Cheap.ky",
+        url: "https://cheap.ky",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Cheap.ky",
+        url: "https://cheap.ky",
+        logo: {
+          "@type": "ImageObject",
+          url: "https://cheap.ky/favicon.svg",
+        },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `https://cheap.ky/blog/${post.slug}`,
+      },
+      keywords: post.tags.join(", "),
     },
-    mainEntityOfPage: `https://cheap.ky/blog/${post.slug}`,
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://cheap.ky" },
+        { "@type": "ListItem", position: 2, name: "Blog", item: "https://cheap.ky/blog" },
+        { "@type": "ListItem", position: 3, name: post.title },
+      ],
+    },
+  ];
+
+  // Add FAQPage schema if the article has FAQ data
+  if (post.faq.length > 0) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: post.faq.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.answer,
+        },
+      })),
+    });
+  }
 
   return (
     <>

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Cheap.ky — Don't just shop, be Cheap.ky";
+export const alt = "Cheap.ky — Shop Smart, Shop Cheap";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -86,25 +86,25 @@ export default async function OGImage() {
         {/* Tagline */}
         <div
           style={{
-            fontSize: 28,
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.85)",
+            fontSize: 30,
+            fontWeight: 600,
+            color: "rgba(255,255,255,0.9)",
             marginTop: 16,
             letterSpacing: "-0.3px",
           }}
         >
-          Don&apos;t just shop — be Cheap.ky
+          Shop Smart, Shop Cheap
         </div>
 
         {/* Description */}
         <div
           style={{
-            fontSize: 20,
-            color: "rgba(255,255,255,0.55)",
+            fontSize: 22,
+            color: "rgba(255,255,255,0.6)",
             marginTop: 12,
           }}
         >
-          Compare grocery prices across Cayman Islands stores
+          Save up to 75% across 35k Cayman grocery products
         </div>
 
         {/* Store badges */}

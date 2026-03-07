@@ -27,11 +27,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Cheap.ky — Compare Grocery Prices in Cayman Islands",
+    default: "Cheap.ky — Shop Smart, Shop Cheap",
     template: "%s | Cheap.ky",
   },
   description:
-    "Compare grocery prices across Cayman Islands stores. Find the cheapest prices at Foster's, Hurley's, Cost-U-Less, Priced Right & Kirk Market. Don't just shop — be Cheap.ky.",
+    "Save up to 75% across 35k Cayman grocery products. Compare prices at Foster's, Hurley's & Cost-U-Less. Don't just shop, be Cheap.ky.",
   keywords: [
     "Cayman Islands grocery prices",
     "cheap groceries Cayman",
@@ -55,15 +55,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_KY",
     siteName: "Cheap.ky",
-    title: "Cheap.ky — Compare Grocery Prices in Cayman Islands",
+    title: "Cheap.ky — Shop Smart, Shop Cheap",
     description:
-      "Compare prices across 5 Cayman grocery stores. Find the cheapest option for every product. Don't just shop — be Cheap.ky.",
+      "Save up to 75% across 35k Cayman grocery products. Don't just shop, be Cheap.ky",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cheap.ky — Cayman Grocery Price Comparison",
+    title: "Cheap.ky — Shop Smart, Shop Cheap",
     description:
-      "Compare grocery prices across Foster's, Hurley's, Cost-U-Less, Priced Right & Kirk Market.",
+      "Save up to 75% across 35k Cayman grocery products. Don't just shop, be Cheap.ky",
   },
   alternates: {
     canonical: "https://cheap.ky",

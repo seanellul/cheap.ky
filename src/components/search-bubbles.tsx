@@ -86,26 +86,26 @@ export function SearchBubbles({ onSelect }: SearchBubblesProps) {
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 py-4">
         {bubbles.map((bubble, i) => {
           // Stagger animation delays and vary duration for organic feel
-          const delay = (i * 0.15) % 3;
-          const duration = 3 + (i % 4) * 0.7;
-          const yOffset = 2 + (i % 3) * 2;
+          const entryDelay = i * 0.04;
+          const floatDelay = 0.5 + (i * 0.15) % 3;
+          const duration = 4 + (i % 4) * 0.8;
+          const yOffset = 1.5 + (i % 3) * 1.5;
 
           return (
             <button
               key={bubble.label}
               onClick={() => onSelect(bubble.label)}
               className={`
-                relative rounded-full border transition-all duration-300
+                relative rounded-full border
+                transition-[transform,box-shadow] duration-200 ease-out
                 hover:scale-105 hover:shadow-md active:scale-95
                 capitalize cursor-pointer select-none
                 ${sizeClass(bubble.weight)}
                 ${colorClass(bubble.weight)}
               `}
               style={{
-                animation: `bubble-float ${duration}s ease-in-out ${delay}s infinite`,
+                animation: `bubble-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${entryDelay}s both, bubble-float ${duration}s ease-in-out ${floatDelay}s infinite`,
                 ["--float-y" as string]: `${yOffset}px`,
-                opacity: 0,
-                animationFillMode: "forwards",
               }}
             >
               {bubble.label}
@@ -115,18 +115,22 @@ export function SearchBubbles({ onSelect }: SearchBubblesProps) {
       </div>
 
       <style jsx>{`
-        @keyframes bubble-float {
-          0% {
+        @keyframes bubble-enter {
+          from {
+            opacity: 0;
+            transform: translateY(4px) scale(0.96);
+          }
+          to {
             opacity: 1;
-            transform: translateY(0px);
+            transform: translateY(0) scale(1);
+          }
+        }
+        @keyframes bubble-float {
+          0%, 100% {
+            transform: translateY(0);
           }
           50% {
-            opacity: 1;
             transform: translateY(calc(-1 * var(--float-y)));
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0px);
           }
         }
       `}</style>

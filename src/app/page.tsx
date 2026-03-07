@@ -24,8 +24,6 @@ import {
 import { SearchResultSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
-import { BrandLogo } from "@/components/brand-logo";
-import { FreshnessBadge } from "@/components/freshness-badge";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView } from "@/lib/analytics";
 
@@ -44,6 +42,8 @@ interface SiteStats {
   products: number;
   stores: number;
   matches: number;
+  avgSavingsPct: number;
+  maxSavingsKyd: number;
 }
 
 const FEATURES = [
@@ -101,6 +101,8 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [stats, setStats] = useState<SiteStats | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [resultKey, setResultKey] = useState(0);
   const { refreshCart } = useCart();
 
   useEffect(() => {
@@ -128,6 +130,7 @@ export default function HomePage() {
   function handleResults(r: SearchResult[]) {
     setResults(r);
     setHasSearched(true);
+    setResultKey((k) => k + 1);
     if (query.length >= 2) trackSearch(query, r.length);
   }
 
@@ -137,27 +140,25 @@ export default function HomePage() {
 
   const isSearchActive = loading || (hasSearched && query.length >= 2);
   const showLanding = !isSearchActive;
-  const showBubbles = !loading && query.length < 2 && results.length === 0;
+  const showBubbles = searchFocused && !loading && query.length < 2 && results.length === 0;
 
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-5 py-6 sm:px-8 sm:py-12">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-4 py-3.5 sm:px-8 sm:py-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,var(--color-accent)/0.06,transparent_60%)]" />
         <div className="relative max-w-2xl">
-          <h1>
-            <BrandLogo size="lg" />
+          <h1 className="text-base sm:text-xl font-bold tracking-tight text-foreground leading-snug">
+            {stats ? (
+              <>Compare <span className="text-primary">{stats.products.toLocaleString()}</span> grocery prices across Cayman</>
+            ) : (
+              <>Compare grocery prices across Cayman</>
+            )}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1.5 sm:text-base max-w-md">
+          <p className="text-muted-foreground text-xs mt-0.5 sm:text-sm max-w-md">
             Don&apos;t just shop &mdash; be{" "}
             <span className="font-semibold text-foreground">Cheap.ky</span>
           </p>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-muted-foreground/70 text-xs sm:text-sm">
-              Compare prices across Cayman&apos;s grocery stores, instantly
-            </p>
-            <FreshnessBadge />
-          </div>
         </div>
       </section>
 
@@ -166,6 +167,7 @@ export default function HomePage() {
         onResults={handleResults}
         onLoadingChange={setLoading}
         onQueryChange={setQuery}
+        onFocusChange={setSearchFocused}
       />
 
       {/* ── Search bubbles (landing state) ── */}
@@ -183,7 +185,7 @@ export default function HomePage() {
 
       {/* ── Results ── */}
       {!loading && results.length > 0 && (
-        <>
+        <div key={resultKey} className="space-y-3">
           <div className="text-xs text-muted-foreground px-1 animate-slide-up-fade">
             <span className="font-medium text-foreground">{results.length}</span> result{results.length === 1 ? "" : "s"}
             {results.filter((r) => r.storeCount > 1).length > 0 && (
@@ -212,10 +214,10 @@ export default function HomePage() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block border rounded-xl overflow-hidden">
+          <div className="hidden md:block border rounded-xl overflow-hidden animate-slide-up-fade">
             <table className="w-full">
               <PriceComparisonHeader />
-              <tbody>
+              <tbody className="stagger-children">
                 {results.map((r) => (
                   <PriceComparisonRow
                     key={r.id}
@@ -233,7 +235,7 @@ export default function HomePage() {
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
 
       {/* Empty state */}

@@ -21,6 +21,7 @@ interface SearchBarProps {
   onResults: (results: SearchResult[]) => void;
   onLoadingChange?: (loading: boolean) => void;
   onQueryChange?: (query: string) => void;
+  onFocusChange?: (focused: boolean) => void;
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -30,7 +31,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "stores", label: "Most stores" },
 ];
 
-export function SearchBar({ onResults, onLoadingChange, onQueryChange }: SearchBarProps) {
+export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [loading, setLoading] = useState(false);
@@ -99,6 +100,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange }: SearchB
           placeholder="Search products..."
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
+          onFocus={() => onFocusChange?.(true)}
+          onBlur={() => onFocusChange?.(false)}
           className="text-base h-12 pl-11 pr-12 rounded-2xl border-border/60 bg-card shadow-sm transition-all duration-200 focus-visible:shadow-md focus-visible:border-primary/30 md:text-lg md:h-14 md:rounded-full"
         />
         {loading && (

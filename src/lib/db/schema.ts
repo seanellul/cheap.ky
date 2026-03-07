@@ -36,6 +36,8 @@ export const storeProducts = pgTable(
     inStock: boolean("in_stock").default(true),
     sourceUrl: text("source_url"),
     rawData: text("raw_data"), // JSON blob
+    isPromo: boolean("is_promo").default(false),
+    promoEndsAt: timestamp("promo_ends_at"),
     createdAt: timestamp("created_at")
       .notNull()
       .defaultNow(),
@@ -90,6 +92,8 @@ export const priceHistory = pgTable("price_history", {
     .references(() => storeProducts.id),
   price: real("price"),
   salePrice: real("sale_price"),
+  isPromo: boolean("is_promo").default(false),
+  promoEndsAt: timestamp("promo_ends_at"),
   recordedAt: timestamp("recorded_at")
     .notNull()
     .defaultNow(),

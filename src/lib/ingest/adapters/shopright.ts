@@ -179,6 +179,8 @@ export class ShoprightAdapter implements StoreAdapter {
         categoryRaw: p.category,
         sourceUrl: `${BASE_URL}/productdetails/catalog/${p.id}`,
         inStock: true,
+        isPromo: true,
+        promoEndsAt: null,
       };
     }
 
@@ -191,6 +193,8 @@ export class ShoprightAdapter implements StoreAdapter {
       categoryRaw: p.category,
       sourceUrl: `${BASE_URL}/productdetails/catalog/${p.id}`,
       inStock: true,
+      isPromo: false,
+      promoEndsAt: null,
     };
   }
 }

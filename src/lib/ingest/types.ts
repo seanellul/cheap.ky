@@ -13,6 +13,8 @@ export interface RawProduct {
   inStock?: boolean;
   sourceUrl?: string | null;
   rawData?: Record<string, unknown>;
+  isPromo?: boolean;
+  promoEndsAt?: Date | null;
 }
 
 export interface StoreAdapter {

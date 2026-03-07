@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
          'store_id', sp.store_id,
          'price', sp.price,
          'sale_price', sp.sale_price,
-         'name', sp.name
+         'name', sp.name,
+         'is_promo', COALESCE(sp.is_promo, false)
        )) AS store_prices
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest) {
        sp.store_id,
        sp.price,
        sp.sale_price,
+       COALESCE(sp.is_promo, false) AS is_promo,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
      WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
@@ -79,9 +81,10 @@ export async function GET(req: NextRequest) {
       price: number | null;
       sale_price: number | null;
       name: string;
+      is_promo: boolean;
     }>;
 
-    const prices: Record<string, { price: number | null; salePrice: number | null; name: string }> = {};
+    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; isPromo: boolean }> = {};
     for (const sp of storePricesArr) {
       // json_agg can produce duplicates if multiple matches — take the first per store
       if (!prices[sp.store_id]) {
@@ -89,6 +92,7 @@ export async function GET(req: NextRequest) {
           price: sp.price,
           salePrice: sp.sale_price,
           name: sp.name,
+          isPromo: sp.is_promo ?? false,
         };
       }
     }
@@ -120,6 +124,7 @@ export async function GET(req: NextRequest) {
           price: sp.price != null ? Number(sp.price) : null,
           salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
           name: String(sp.name),
+          isPromo: sp.is_promo === true,
         },
       },
     });

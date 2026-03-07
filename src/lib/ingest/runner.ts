@@ -2,6 +2,7 @@ import { db } from "../db";
 import { storeProducts, priceHistory, stores } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import type { StoreAdapter, RawProduct } from "./types";
+import { parseUnitSize } from "../utils/unit-price";
 
 export async function runIngestion(adapter: StoreAdapter) {
   const storeId = adapter.storeId;
@@ -29,6 +30,8 @@ export async function runIngestion(adapter: StoreAdapter) {
         )
         .limit(1);
 
+      const parsed = parseUnitSize(product.name, product.size);
+
       if (existing.length > 0) {
         await db
           .update(storeProducts)
@@ -41,6 +44,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             salePrice: product.salePrice,
             unit: product.unit,
             size: product.size,
+            unitSize: parsed?.unitSize ?? existing[0].unitSize,
+            unitType: parsed?.unitType ?? existing[0].unitType,
             categoryRaw: product.categoryRaw,
             imageUrl: product.imageUrl,
             inStock: product.inStock ?? true,
@@ -77,6 +82,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             imageUrl: product.imageUrl,
             inStock: product.inStock ?? true,
             sourceUrl: product.sourceUrl,
+            unitSize: parsed?.unitSize ?? null,
+            unitType: parsed?.unitType ?? null,
             rawData: product.rawData ? JSON.stringify(product.rawData) : null,
           })
           .returning();

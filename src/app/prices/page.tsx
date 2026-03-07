@@ -6,6 +6,7 @@ import { getProductList, getTopCategories } from "@/lib/data/products";
 import { formatKYD } from "@/lib/utils/currency";
 import { ChevronRight, ChevronLeft, Tag, Store } from "lucide-react";
 import { PriceSearchInput } from "./search-input";
+import { MissingProductButton } from "@/components/missing-product-button";
 
 export const metadata: Metadata = {
   title: "Compare Grocery Prices in Cayman Islands",
@@ -157,10 +158,11 @@ export default async function PricesIndexPage({ searchParams }: PageProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
+        <div className="text-center py-12 space-y-3">
           <p className="text-muted-foreground">
             No products found. Try a different search or category.
           </p>
+          <MissingProductButton />
         </div>
       )}
 

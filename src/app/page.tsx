@@ -24,6 +24,7 @@ import {
 import { SearchResultSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
+import { MissingProductButton } from "@/components/missing-product-button";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
@@ -239,16 +240,25 @@ export default function HomePage() {
               </tbody>
             </table>
           </div>
+
+          <div className="flex justify-center pt-1">
+            <MissingProductButton variant="inline" />
+          </div>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && hasSearched && query.length >= 2 && results.length === 0 && (
-        <EmptyState
-          icon={Search}
-          title="No products found"
-          description="Try a different search term or check your spelling"
-        />
+        <div className="space-y-3">
+          <EmptyState
+            icon={Search}
+            title="No products found"
+            description="Try a different search term or check your spelling"
+          />
+          <div className="flex justify-center">
+            <MissingProductButton />
+          </div>
+        </div>
       )}
 
       {/* ── Landing sections (hidden when actively searching) ── */}

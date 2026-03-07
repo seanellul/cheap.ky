@@ -9,6 +9,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
+import { MissingProductButton } from "@/components/missing-product-button";
 import { track } from "@/lib/utils/track";
 import { trackCompare } from "@/lib/analytics";
 
@@ -176,8 +177,9 @@ export default function ComparePage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          No matching products found.
+        <div className="text-center py-12 space-y-3">
+          <p className="text-muted-foreground">No matching products found.</p>
+          <MissingProductButton />
         </div>
       ) : (
         <>

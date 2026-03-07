@@ -11,7 +11,7 @@ import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
 import { track } from "@/lib/utils/track";
 
-const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright"] as const;
+const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
 
 interface CompareItem {
   id: number;

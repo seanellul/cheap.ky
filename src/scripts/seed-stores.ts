@@ -32,6 +32,12 @@ const storeData = [
     website: "https://shop.pricedright.ky",
     sourceType: "api",
   },
+  {
+    id: "shopright",
+    name: "Shopright",
+    website: "https://www.shopright.ky",
+    sourceType: "playwright",
+  },
 ];
 
 async function seed() {

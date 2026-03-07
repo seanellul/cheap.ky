@@ -4,6 +4,7 @@ import { CostULessAdapter } from "../lib/ingest/adapters/costuless";
 import { KirkMarketAdapter } from "../lib/ingest/adapters/kirkmarket";
 import { HurleysAdapter } from "../lib/ingest/adapters/hurleys";
 import { PricedRightAdapter } from "../lib/ingest/adapters/pricedright";
+import { ShoprightAdapter } from "../lib/ingest/adapters/shopright";
 import type { StoreAdapter } from "../lib/ingest/types";
 
 const adapters: Record<string, () => StoreAdapter> = {
@@ -12,6 +13,7 @@ const adapters: Record<string, () => StoreAdapter> = {
   kirkmarket: () => new KirkMarketAdapter(),
   hurleys: () => new HurleysAdapter(),
   pricedright: () => new PricedRightAdapter(),
+  shopright: () => new ShoprightAdapter(),
 };
 
 async function main() {

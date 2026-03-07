@@ -5,7 +5,7 @@ import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
 
-const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright"] as const;
+const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
 
 interface CompareCardProps {
   id: number;

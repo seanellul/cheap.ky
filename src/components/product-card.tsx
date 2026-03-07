@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 
-const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright"] as const;
+const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
 
 interface ProductCardProps {
   id: number;

@@ -40,6 +40,7 @@ const STORES = [
   { id: "hurleys", name: "Hurley's" },
   { id: "costuless", name: "Cost-U-Less" },
   { id: "pricedright", name: "Priced Right" },
+  { id: "shopright", name: "Shopright" },
 ];
 
 export default function StaplesPage() {

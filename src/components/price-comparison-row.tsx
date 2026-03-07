@@ -8,13 +8,14 @@ import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
 
-const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright"] as const;
+const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
 const STORE_NAMES: Record<string, string> = {
   fosters: "Foster's",
   hurleys: "Hurley's",
   kirkmarket: "Kirk Mkt",
   costuless: "Cost-U-Less",
   pricedright: "Priced Right",
+  shopright: "Shopright",
 };
 
 interface PriceComparisonRowProps {

@@ -6,6 +6,7 @@ const STORE_COLORS: Record<string, { bg: string; text: string }> = {
   kirkmarket: { bg: "bg-store-kirkmarket/15", text: "text-store-kirkmarket" },
   costuless: { bg: "bg-store-costuless/15", text: "text-store-costuless" },
   pricedright: { bg: "bg-store-pricedright/15", text: "text-store-pricedright" },
+  shopright: { bg: "bg-store-shopright/15", text: "text-store-shopright" },
 };
 
 const STORE_NAMES: Record<string, string> = {
@@ -14,6 +15,7 @@ const STORE_NAMES: Record<string, string> = {
   kirkmarket: "Kirk Mkt",
   costuless: "Cost-U-Less",
   pricedright: "Priced Right",
+  shopright: "Shopright",
 };
 
 interface StoreBadgeProps {

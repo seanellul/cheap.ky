@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
@@ -26,6 +27,7 @@ interface CompareItem {
   savings: number;
   categoryRaw: string | null;
   prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
 interface CategoryOption {
@@ -195,6 +197,7 @@ export default function ComparePage() {
                 maxPrice={item.maxPrice}
                 savings={item.savings}
                 prices={item.prices}
+                priceChanges={item.priceChanges}
                 onClick={() => setSelectedProductId(item.id)}
               />
             ))}
@@ -243,11 +246,19 @@ export default function ComparePage() {
                         const isCheapest = storeId === cheapest;
                         return (
                           <td key={storeId} className="py-3 px-2 text-center text-sm">
-                            <PriceDisplay
-                              price={p?.price ?? null}
-                              salePrice={p?.salePrice ?? null}
-                              isCheapest={isCheapest}
-                            />
+                            <div className="inline-flex flex-col items-center gap-0.5">
+                              <PriceDisplay
+                                price={p?.price ?? null}
+                                salePrice={p?.salePrice ?? null}
+                                isCheapest={isCheapest}
+                              />
+                              {item.priceChanges?.[storeId] && (
+                                <PriceChangeIndicator
+                                  direction={item.priceChanges[storeId].direction}
+                                  amount={item.priceChanges[storeId].amount}
+                                />
+                              )}
+                            </div>
                           </td>
                         );
                       })}

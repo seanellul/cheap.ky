@@ -37,6 +37,7 @@ interface SearchResult {
   minPrice: number | null;
   storeCount: number;
   prices: Record<string, { price: number | null; salePrice: number | null; name: string }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
 interface SiteStats {
@@ -210,6 +211,7 @@ export default function HomePage() {
                 size={r.size}
                 imageUrl={r.imageUrl}
                 prices={r.prices}
+                priceChanges={r.priceChanges}
                 minPrice={r.minPrice}
                 onAddToCart={handleAddToCart}
                 onClickProduct={setSelectedProductId}
@@ -231,6 +233,7 @@ export default function HomePage() {
                     size={r.size}
                     imageUrl={r.imageUrl}
                     prices={r.prices}
+                    priceChanges={r.priceChanges}
                     minPrice={r.minPrice}
                     onAddToCart={handleAddToCart}
                     onClickProduct={setSelectedProductId}

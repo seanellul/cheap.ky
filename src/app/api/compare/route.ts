@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
+import { getPriceChanges } from "@/lib/db/price-changes";
 
 const MATCHED_CTE = `
   WITH matched AS (
@@ -73,11 +74,13 @@ export async function GET(req: NextRequest) {
     number,
     Record<string, { price: number | null; salePrice: number | null; productName: string }>
   > = {};
+  // Track spId per product+store for price change lookup
+  const productStoreSpIds: Record<number, Record<string, number>> = {};
 
   if (productIds.length > 0) {
     const placeholders = productIds.map((_, i) => `$${i + 1}`).join(",");
     const priceRows = await rawSql(
-      `SELECT pm.product_id, sp.store_id, sp.price, sp.sale_price, sp.name
+      `SELECT pm.product_id, sp.id as sp_id, sp.store_id, sp.price, sp.sale_price, sp.name
        FROM product_matches pm
        JOIN store_products sp ON pm.store_product_id = sp.id
        WHERE pm.product_id IN (${placeholders}) AND pm.match_method = 'upc'`,
@@ -86,33 +89,51 @@ export async function GET(req: NextRequest) {
 
     for (const row of priceRows) {
       const pid = Number(row.product_id);
+      const spId = Number(row.sp_id);
+      const storeId = String(row.store_id);
       if (!storePrices[pid]) storePrices[pid] = {};
-      storePrices[pid][String(row.store_id)] = {
+      storePrices[pid][storeId] = {
         price: row.price != null ? Number(row.price) : null,
         salePrice: row.sale_price != null ? Number(row.sale_price) : null,
         productName: String(row.name),
       };
+      if (!productStoreSpIds[pid]) productStoreSpIds[pid] = {};
+      productStoreSpIds[pid][storeId] = spId;
     }
   }
+
+  // Batch fetch price changes
+  const allSpIds = Object.values(productStoreSpIds).flatMap((m) => Object.values(m));
+  const priceChangeMap = await getPriceChanges(allSpIds);
 
   // Get categories for filter sidebar
   const categories = await rawSql(
     `${MATCHED_CTE} SELECT category_raw, COUNT(*) as cnt FROM matched WHERE category_raw IS NOT NULL GROUP BY category_raw ORDER BY COUNT(*) DESC LIMIT 50`
   );
 
-  const items = rows.map((r) => ({
-    id: Number(r.product_id),
-    name: String(r.name),
-    brand: r.brand as string | null,
-    size: r.size as string | null,
-    imageUrl: r.image_url as string | null,
-    numStores: Number(r.num_stores),
-    minPrice: Number(r.min_price),
-    maxPrice: Number(r.max_price),
-    savings: Number(r.savings),
-    categoryRaw: r.category_raw as string | null,
-    prices: storePrices[Number(r.product_id)] || {},
-  }));
+  const items = rows.map((r) => {
+    const pid = Number(r.product_id);
+    const spIds = productStoreSpIds[pid] || {};
+    const priceChanges: Record<string, { direction: "up" | "down"; amount: number }> = {};
+    for (const [storeId, spId] of Object.entries(spIds)) {
+      const change = priceChangeMap.get(spId);
+      if (change) priceChanges[storeId] = change;
+    }
+    return {
+      id: pid,
+      name: String(r.name),
+      brand: r.brand as string | null,
+      size: r.size as string | null,
+      imageUrl: r.image_url as string | null,
+      numStores: Number(r.num_stores),
+      minPrice: Number(r.min_price),
+      maxPrice: Number(r.max_price),
+      savings: Number(r.savings),
+      categoryRaw: r.category_raw as string | null,
+      prices: storePrices[pid] || {},
+      priceChanges,
+    };
+  });
 
   return NextResponse.json({
     items,

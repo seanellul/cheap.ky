@@ -13,6 +13,7 @@ import { StapleDetailPanel } from "@/components/staple-detail-panel";
 import { CategoryStrip, type CategoryConfig } from "@/components/category-strip";
 import { AisleSection } from "@/components/aisle-section";
 import { cn } from "@/lib/utils";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { trackStapleExpand, trackStapleAddToCart, trackBatchAddToCart } from "@/lib/analytics";
 
 // ── Types ──
@@ -32,6 +33,7 @@ interface Staple {
   name: string;
   category: string;
   prices: Record<string, StaplePrice>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
 interface SearchResult {
@@ -554,6 +556,12 @@ function StaplesPage() {
                                 {p.originalPrice != null ? formatKYD(p.originalPrice) : ""}
                               </span>
                             )}
+                            {staple.priceChanges?.[p.storeId] && (
+                              <PriceChangeIndicator
+                                direction={staple.priceChanges[p.storeId].direction}
+                                amount={staple.priceChanges[p.storeId].amount}
+                              />
+                            )}
                           </div>
                         ))}
                       </div>
@@ -659,6 +667,12 @@ function StaplesPage() {
                                         <span className="text-[10px] text-destructive line-through tabular-nums">
                                           {formatKYD(p.price!)}
                                         </span>
+                                      )}
+                                      {staple.priceChanges?.[s.id] && (
+                                        <PriceChangeIndicator
+                                          direction={staple.priceChanges[s.id].direction}
+                                          amount={staple.priceChanges[s.id].amount}
+                                        />
                                       )}
                                     </div>
                                   ) : isAdmin ? (

@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -25,6 +26,7 @@ interface PriceComparisonRowProps {
   size: string | null;
   imageUrl: string | null;
   prices: Record<string, { price: number | null; salePrice: number | null }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
@@ -38,6 +40,7 @@ export function PriceComparisonRow({
   size,
   imageUrl,
   prices,
+  priceChanges,
   onAddToCart,
   onClickProduct,
   showAddToCart = true,
@@ -85,7 +88,12 @@ export function PriceComparisonRow({
         const isCheapest = storeId === cheapestStore;
         return (
           <td key={storeId} className="py-3 px-2 text-center text-sm">
-            <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+            <div className="inline-flex flex-col items-center gap-0.5">
+              <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+              {priceChanges?.[storeId] && (
+                <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
+              )}
+            </div>
           </td>
         );
       })}

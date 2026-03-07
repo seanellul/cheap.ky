@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { staples, stapleProducts, storeProducts } from "@/lib/db/schema";
 import { eq, and, ilike, isNotNull, or } from "drizzle-orm";
+import { getPriceChanges } from "@/lib/db/price-changes";
 
 export async function GET() {
   const allStaples = await db.select().from(staples).orderBy(staples.sortOrder);
 
   const result = [];
+  const allSpIds: number[] = [];
+  // Track which spId belongs to which result index + storeId
+  const spIdMapping: Array<{ resultIdx: number; storeId: string; spId: number }> = [];
 
   for (const staple of allStaples) {
-    // Get linked products for this staple
     const links = await db
       .select({
         storeId: stapleProducts.storeId,
@@ -38,6 +41,7 @@ export async function GET() {
       }
     > = {};
 
+    const resultIdx = result.length;
     for (const link of links) {
       prices[link.storeId] = {
         productId: link.productId,
@@ -48,6 +52,8 @@ export async function GET() {
         imageUrl: link.imageUrl,
         autoMatched: link.autoMatched,
       };
+      allSpIds.push(link.productId);
+      spIdMapping.push({ resultIdx, storeId: link.storeId, spId: link.productId });
     }
 
     result.push({
@@ -55,7 +61,17 @@ export async function GET() {
       name: staple.name,
       category: staple.category,
       prices,
+      priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,
     });
+  }
+
+  // Batch fetch price changes
+  const priceChangeMap = await getPriceChanges(allSpIds);
+  for (const { resultIdx, storeId, spId } of spIdMapping) {
+    const change = priceChangeMap.get(spId);
+    if (change) {
+      result[resultIdx].priceChanges[storeId] = change;
+    }
   }
 
   return NextResponse.json({ staples: result });

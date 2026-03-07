@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
+import { getPriceChanges } from "@/lib/db/price-changes";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
        MIN(COALESCE(sp.sale_price, sp.price)) AS min_price,
        COUNT(DISTINCT sp.store_id) AS store_count,
        json_agg(json_build_object(
+         'sp_id', sp.id,
          'store_id', sp.store_id,
          'price', sp.price,
          'sale_price', sp.sale_price,
@@ -71,10 +73,15 @@ export async function GET(req: NextRequest) {
   );
 
   const results = [];
+  const allSpIds: number[] = [];
+
+  // Track spId -> storeId mapping per result index
+  const resultSpIds: Array<Record<string, number>> = [];
 
   // Process matched products
   for (const row of matched) {
     const storePricesArr = row.store_prices as Array<{
+      sp_id: number;
       store_id: string;
       price: number | null;
       sale_price: number | null;
@@ -82,17 +89,20 @@ export async function GET(req: NextRequest) {
     }>;
 
     const prices: Record<string, { price: number | null; salePrice: number | null; name: string }> = {};
+    const storeSpIds: Record<string, number> = {};
     for (const sp of storePricesArr) {
-      // json_agg can produce duplicates if multiple matches — take the first per store
       if (!prices[sp.store_id]) {
         prices[sp.store_id] = {
           price: sp.price,
           salePrice: sp.sale_price,
           name: sp.name,
         };
+        allSpIds.push(sp.sp_id);
+        storeSpIds[sp.store_id] = sp.sp_id;
       }
     }
 
+    resultSpIds.push(storeSpIds);
     results.push({
       id: Number(row.id),
       name: String(row.canonical_name),
@@ -102,13 +112,19 @@ export async function GET(req: NextRequest) {
       minPrice: row.min_price != null ? Number(row.min_price) : null,
       storeCount: Number(row.store_count),
       prices,
+      priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,
     });
   }
 
   // Process unmatched store products
   for (const sp of unmatched) {
+    const spId = Number(sp.id);
+    const storeId = String(sp.store_id);
+    allSpIds.push(spId);
+
+    resultSpIds.push({ [storeId]: spId });
     results.push({
-      id: -Number(sp.id),
+      id: -spId,
       name: String(sp.name),
       brand: sp.brand as string | null,
       size: sp.size as string | null,
@@ -116,13 +132,26 @@ export async function GET(req: NextRequest) {
       minPrice: sp.min_price != null ? Number(sp.min_price) : null,
       storeCount: 1,
       prices: {
-        [String(sp.store_id)]: {
+        [storeId]: {
           price: sp.price != null ? Number(sp.price) : null,
           salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
           name: String(sp.name),
         },
       },
+      priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,
     });
+  }
+
+  // Batch fetch price changes and merge into results
+  const priceChangeMap = await getPriceChanges(allSpIds);
+  for (let i = 0; i < results.length; i++) {
+    const spIds = resultSpIds[i];
+    for (const [storeId, spId] of Object.entries(spIds)) {
+      const change = priceChangeMap.get(spId);
+      if (change) {
+        results[i].priceChanges[storeId] = change;
+      }
+    }
   }
 
   // If sorting by price, merge and re-sort both lists

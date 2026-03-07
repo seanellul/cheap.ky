@@ -1,0 +1,16 @@
+{
+  "name": "Cheap.ky - Don't just shop, be Cheap.ky",
+  "short_name": "Cheap.ky",
+  "description": "Compare grocery prices across Cayman Islands stores",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0fdf9",
+  "theme_color": "#0d7377",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

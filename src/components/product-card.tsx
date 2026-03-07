@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
 
@@ -16,7 +17,7 @@ interface ProductCardProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; unitSize?: number | null; unitType?: string | null }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
@@ -96,7 +97,10 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, minPrice:
                 }`}
               >
                 <StoreBadge storeId={storeId} size="sm" />
-                <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+                {(() => {
+                  const up = calculateUnitPrice(effective!, p?.unitSize ?? null, p?.unitType ?? null);
+                  return <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} unitPrice={up?.unitPrice} unitPer={up?.per} />;
+                })()}
               </div>
             );
           })}

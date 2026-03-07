@@ -4,6 +4,7 @@ import { ProductImage } from "@/components/product-image";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
 
@@ -16,7 +17,7 @@ interface CompareCardProps {
   minPrice: number;
   savings: number;
   maxPrice: number;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; unitSize?: number | null; unitType?: string | null }>;
   onClick?: () => void;
 }
 
@@ -75,7 +76,10 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
               }`}
             >
               <StoreBadge storeId={storeId} size="sm" />
-              <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+              {(() => {
+                const up = effective != null ? calculateUnitPrice(effective, p?.unitSize ?? null, p?.unitType ?? null) : null;
+                return <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} unitPrice={up?.unitPrice} unitPer={up?.per} />;
+              })()}
             </div>
           );
         })}

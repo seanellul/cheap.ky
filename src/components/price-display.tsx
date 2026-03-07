@@ -7,9 +7,11 @@ interface PriceDisplayProps {
   isCheapest?: boolean;
   quantity?: number;
   className?: string;
+  unitPrice?: number | null;
+  unitPer?: string | null;
 }
 
-export function PriceDisplay({ price, salePrice, isCheapest, quantity = 1, className }: PriceDisplayProps) {
+export function PriceDisplay({ price, salePrice, isCheapest, quantity = 1, className, unitPrice, unitPer }: PriceDisplayProps) {
   const effectivePrice = salePrice ?? price;
   if (effectivePrice == null) {
     return <span className="text-muted-foreground">--</span>;
@@ -26,6 +28,11 @@ export function PriceDisplay({ price, salePrice, isCheapest, quantity = 1, class
       {isOnSale && (
         <div className="text-xs line-through text-muted-foreground">
           {formatKYD((price ?? 0) * quantity)}
+        </div>
+      )}
+      {unitPrice != null && unitPer && (
+        <div className="text-[10px] text-muted-foreground">
+          {formatKYD(unitPrice)}/{unitPer}
         </div>
       )}
     </div>

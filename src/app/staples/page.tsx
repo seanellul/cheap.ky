@@ -13,6 +13,7 @@ import { StapleDetailPanel } from "@/components/staple-detail-panel";
 import { CategoryStrip, type CategoryConfig } from "@/components/category-strip";
 import { AisleSection } from "@/components/aisle-section";
 import { cn } from "@/lib/utils";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 import { trackStapleExpand, trackStapleAddToCart, trackBatchAddToCart } from "@/lib/analytics";
 
 // ── Types ──
@@ -25,6 +26,8 @@ interface StaplePrice {
   size: string | null;
   imageUrl: string | null;
   autoMatched: boolean | null;
+  unitSize?: number | null;
+  unitType?: string | null;
 }
 
 interface Staple {
@@ -102,6 +105,8 @@ function getSortedPrices(staple: Staple) {
         effective,
         isOnSale: p.salePrice != null && p.price != null && p.salePrice < p.price,
         originalPrice: p.price,
+        unitSize: p.unitSize,
+        unitType: p.unitType,
       };
     })
     .filter((p) => p.effective != null)
@@ -554,6 +559,14 @@ function StaplesPage() {
                                 {p.originalPrice != null ? formatKYD(p.originalPrice) : ""}
                               </span>
                             )}
+                            {(() => {
+                              const up = p.effective != null ? calculateUnitPrice(p.effective, p.unitSize ?? null, p.unitType ?? null) : null;
+                              return up ? (
+                                <span className="text-[9px] text-muted-foreground tabular-nums">
+                                  {formatKYD(up.unitPrice)}/{up.per}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         ))}
                       </div>
@@ -660,6 +673,14 @@ function StaplesPage() {
                                           {formatKYD(p.price!)}
                                         </span>
                                       )}
+                                      {(() => {
+                                        const up = calculateUnitPrice(effective, p.unitSize ?? null, p.unitType ?? null);
+                                        return up ? (
+                                          <span className="text-[10px] text-muted-foreground">
+                                            {formatKYD(up.unitPrice)}/{up.per}
+                                          </span>
+                                        ) : null;
+                                      })()}
                                     </div>
                                   ) : isAdmin ? (
                                     <span className="text-muted-foreground/50 hover:text-primary text-xs cursor-pointer">+</span>

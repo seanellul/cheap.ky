@@ -3,6 +3,7 @@
 import { ProductImage } from "@/components/product-image";
 import { StoreBadge } from "@/components/store-badge";
 import { formatKYD } from "@/lib/utils/currency";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 
 interface StaplePrice {
   productId: number;
@@ -12,6 +13,8 @@ interface StaplePrice {
   size: string | null;
   imageUrl: string | null;
   autoMatched: boolean | null;
+  unitSize?: number | null;
+  unitType?: string | null;
 }
 
 interface StapleDetailPanelProps {
@@ -27,7 +30,7 @@ export function StapleDetailPanel({ name, prices, stores }: StapleDetailPanelPro
     .map((s) => {
       const p = prices[s.id];
       const effective = p.salePrice ?? p.price;
-      return { storeId: s.id, storeName: s.name, ...p, effective };
+      return { storeId: s.id, storeName: s.name, ...p, effective, unitSize: p.unitSize, unitType: p.unitType };
     })
     .sort((a, b) => (a.effective ?? Infinity) - (b.effective ?? Infinity));
 
@@ -113,6 +116,14 @@ export function StapleDetailPanel({ name, prices, stores }: StapleDetailPanelPro
                     {formatKYD(entry.price!)}
                   </div>
                 )}
+                {(() => {
+                  const up = entry.effective != null ? calculateUnitPrice(entry.effective, entry.unitSize ?? null, entry.unitType ?? null) : null;
+                  return up ? (
+                    <div className="text-[10px] text-muted-foreground">
+                      {formatKYD(up.unitPrice)}/{up.per}
+                    </div>
+                  ) : null;
+                })()}
                 {!isCheapest && priceDiff > 0.01 && (
                   <div className="text-[11px] text-muted-foreground mt-0.5">
                     +{formatKYD(priceDiff)} more

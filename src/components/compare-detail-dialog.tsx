@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { StoreBadge } from "@/components/store-badge";
 import { ProductImage } from "@/components/product-image";
 import { PriceDisplay } from "@/components/price-display";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 
 interface StoreMatch {
   storeProductId: number;
@@ -24,6 +25,8 @@ interface StoreMatch {
   salePrice: number | null;
   imageUrl: string | null;
   upc: string | null;
+  unitSize: number | null;
+  unitType: string | null;
   categoryRaw: string | null;
   sourceUrl: string | null;
   matchMethod: string;
@@ -134,7 +137,11 @@ export function CompareDetailDialog({ productId, onClose }: CompareDetailDialogP
 
                     {/* Price */}
                     <div className="text-center">
-                      <PriceDisplay price={m.price} salePrice={m.salePrice} isCheapest={isCheapest} className="text-lg" />
+                      {(() => {
+                        const effective = m.salePrice ?? m.price;
+                        const up = effective != null ? calculateUnitPrice(effective, m.unitSize, m.unitType) : null;
+                        return <PriceDisplay price={m.price} salePrice={m.salePrice} isCheapest={isCheapest} className="text-lg" unitPrice={up?.unitPrice} unitPer={up?.per} />;
+                      })()}
                     </div>
 
                     {/* Product details */}

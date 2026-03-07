@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
 const STORE_NAMES: Record<string, string> = {
@@ -24,7 +25,7 @@ interface PriceComparisonRowProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; unitSize?: number | null; unitType?: string | null }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
   onClickProduct?: (productId: number) => void;
@@ -85,7 +86,11 @@ export function PriceComparisonRow({
         const isCheapest = storeId === cheapestStore;
         return (
           <td key={storeId} className="py-3 px-2 text-center text-sm">
-            <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+            {(() => {
+              const effective = p?.salePrice ?? p?.price;
+              const up = effective != null ? calculateUnitPrice(effective, p?.unitSize ?? null, p?.unitType ?? null) : null;
+              return <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} unitPrice={up?.unitPrice} unitPer={up?.per} />;
+            })()}
           </td>
         );
       })}

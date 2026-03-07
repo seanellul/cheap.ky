@@ -20,6 +20,8 @@ export async function GET() {
         salePrice: storeProducts.salePrice,
         size: storeProducts.size,
         imageUrl: storeProducts.imageUrl,
+        unitSize: storeProducts.unitSize,
+        unitType: storeProducts.unitType,
       })
       .from(stapleProducts)
       .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
@@ -35,6 +37,8 @@ export async function GET() {
         size: string | null;
         imageUrl: string | null;
         autoMatched: boolean | null;
+        unitSize: number | null;
+        unitType: string | null;
       }
     > = {};
 
@@ -47,6 +51,8 @@ export async function GET() {
         size: link.size,
         imageUrl: link.imageUrl,
         autoMatched: link.autoMatched,
+        unitSize: link.unitSize,
+        unitType: link.unitType,
       };
     }
 

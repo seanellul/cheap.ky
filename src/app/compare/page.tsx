@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { formatKYD } from "@/lib/utils/currency";
+import { calculateUnitPrice } from "@/lib/utils/unit-price";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
 import { track } from "@/lib/utils/track";
@@ -25,7 +26,7 @@ interface CompareItem {
   maxPrice: number;
   savings: number;
   categoryRaw: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; unitSize?: number | null; unitType?: string | null }>;
 }
 
 interface CategoryOption {
@@ -243,11 +244,19 @@ export default function ComparePage() {
                         const isCheapest = storeId === cheapest;
                         return (
                           <td key={storeId} className="py-3 px-2 text-center text-sm">
-                            <PriceDisplay
-                              price={p?.price ?? null}
-                              salePrice={p?.salePrice ?? null}
-                              isCheapest={isCheapest}
-                            />
+                            {(() => {
+                              const effective = p?.salePrice ?? p?.price;
+                              const up = effective != null ? calculateUnitPrice(effective, p?.unitSize ?? null, p?.unitType ?? null) : null;
+                              return (
+                                <PriceDisplay
+                                  price={p?.price ?? null}
+                                  salePrice={p?.salePrice ?? null}
+                                  isCheapest={isCheapest}
+                                  unitPrice={up?.unitPrice}
+                                  unitPer={up?.per}
+                                />
+                              );
+                            })()}
                           </td>
                         );
                       })}

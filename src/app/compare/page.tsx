@@ -11,6 +11,7 @@ import { StalenessBadge } from "@/components/staleness-badge";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
+import { FavouriteButton } from "@/components/favourite-button";
 import { track } from "@/lib/utils/track";
 import { trackCompare } from "@/lib/analytics";
 
@@ -234,8 +235,11 @@ export default function ComparePage() {
                           onClick={() => setSelectedProductId(item.id)}
                         >
                           <ProductImage src={item.imageUrl} alt={item.name} size="sm" />
-                          <div className="min-w-0">
-                            <div className="font-medium text-sm truncate max-w-[220px]">{item.name}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <div className="font-medium text-sm truncate max-w-[200px]">{item.name}</div>
+                              <FavouriteButton productId={item.id} />
+                            </div>
                             <div className="text-xs text-muted-foreground truncate">
                               {[item.brand, item.size].filter(Boolean).join(" - ")}
                             </div>

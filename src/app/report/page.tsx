@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TrendingDown, Trophy, BarChart3, ArrowRight, Percent, DollarSign, Package, Scale } from "lucide-react";
 import { StoreBadge } from "@/components/store-badge";
 import { formatKYD } from "@/lib/utils/currency";
+import { trackReportView } from "@/lib/analytics";
 
 interface ReportData {
   overview: {
@@ -165,7 +166,7 @@ export default function ReportPage() {
   useEffect(() => {
     fetch("/api/report")
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
+      .then((d) => { setData(d); setLoading(false); trackReportView(); });
   }, []);
 
   if (loading || !data) {

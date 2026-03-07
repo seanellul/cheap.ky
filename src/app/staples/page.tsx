@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/contexts/cart-context";
 import { StapleDetailPanel } from "@/components/staple-detail-panel";
 import { cn } from "@/lib/utils";
+import { trackStapleExpand, trackStapleAddToCart } from "@/lib/analytics";
 
 interface StaplePrice {
   productId: number;
@@ -117,6 +118,8 @@ function StaplesPage() {
   }
 
   async function addToCart(stapleId: number) {
+    const staple = staples.find((s) => s.id === stapleId);
+    if (staple) trackStapleAddToCart(staple.name);
     await fetch("/api/smart-cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -306,7 +309,10 @@ function StaplesPage() {
                       "flex items-center gap-3 p-3 transition-colors active:bg-muted/30 cursor-pointer",
                       isExpanded && "bg-muted/20"
                     )}
-                    onClick={() => setExpandedId(isExpanded ? null : staple.id)}
+                    onClick={() => {
+                      if (!isExpanded) trackStapleExpand(staple.name);
+                      setExpandedId(isExpanded ? null : staple.id);
+                    }}
                   >
                     <ProductImage src={getStapleImage(staple)} alt={staple.name} size="md" />
 
@@ -407,7 +413,10 @@ function StaplesPage() {
                       className={`border-b transition-colors cursor-pointer ${
                         isExpanded ? "bg-muted/60" : "hover:bg-muted/50"
                       }`}
-                      onClick={() => setExpandedId(isExpanded ? null : staple.id)}
+                      onClick={() => {
+                        if (!isExpanded) trackStapleExpand(staple.name);
+                        setExpandedId(isExpanded ? null : staple.id);
+                      }}
                     >
                       <td className="py-2.5 pl-3 pr-2">
                         <div className="flex items-center gap-2">

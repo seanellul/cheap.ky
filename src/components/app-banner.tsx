@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Smartphone } from "lucide-react";
 import { BrandIcon } from "@/components/brand-logo";
+import { trackAppBannerClick, trackAppBannerDismiss } from "@/lib/analytics";
 
 const APP_STORE_URL = "https://apps.apple.com/app/cheapky"; // TODO: replace with real URL
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=ky.cheap.app"; // TODO: replace with real URL
@@ -37,6 +38,7 @@ export function AppBanner() {
   }, []);
 
   function dismiss() {
+    trackAppBannerDismiss();
     setVisible(false);
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
@@ -59,6 +61,7 @@ export function AppBanner() {
           href={getStoreUrl()}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackAppBannerClick(/iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" : "android")}
           className="shrink-0 bg-primary text-primary-foreground text-xs font-semibold px-3.5 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1.5"
         >
           <Smartphone className="h-3.5 w-3.5" />

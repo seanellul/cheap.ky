@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/lib/contexts/cart-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
+import { PostHogProvider } from "@/lib/contexts/posthog-provider";
+import { PostHogPageView } from "@/lib/contexts/posthog-provider";
+import { Suspense } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { AppBanner } from "@/components/app-banner";
 import { Toaster } from "@/components/ui/sonner";
@@ -144,6 +147,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PostHogProvider>
+        <Suspense fallback={null}><PostHogPageView /></Suspense>
         <ThemeProvider>
         <CartProvider>
           <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-xl backdrop-saturate-150">
@@ -178,6 +183,7 @@ export default function RootLayout({
           <Toaster />
         </CartProvider>
         </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

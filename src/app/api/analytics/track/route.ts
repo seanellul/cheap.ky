@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { taggedSql } from "@/lib/db";
+import { isProfane } from "@/lib/utils/profanity";
 
 const VALID_TYPES = ["search", "product_view", "compare_view", "page_view"];
 
@@ -16,6 +17,11 @@ export async function POST(request: Request) {
     const sanitizedData = typeof data === "string"
       ? data.toLowerCase().trim().slice(0, 200)
       : null;
+
+    // Don't store profane search queries at all
+    if (sanitizedData && isProfane(sanitizedData)) {
+      return NextResponse.json({ ok: true }); // silent drop
+    }
 
     await taggedSql`
       INSERT INTO analytics_events (type, data, product_id, result_count)

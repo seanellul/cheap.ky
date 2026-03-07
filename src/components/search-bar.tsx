@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, ArrowUpDown } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface SearchResult {
@@ -13,6 +13,11 @@ interface SearchResult {
   minPrice: number | null;
   storeCount: number;
   prices: Record<string, { price: number | null; salePrice: number | null; name: string }>;
+}
+
+interface CategoryOption {
+  name: string;
+  slug: string;
 }
 
 type SortOption = "relevance" | "price_asc" | "price_desc" | "stores";
@@ -34,14 +39,23 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function doSearch(q: string, s: SortOption) {
+  useEffect(() => {
+    fetch("/api/search/categories")
+      .then((r) => r.json())
+      .then((data: CategoryOption[]) => setCategories(data))
+      .catch(() => {});
+  }, []);
+
+  function doSearch(q: string, s: SortOption, cat: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (q.length < 2) {
+    if (q.length < 2 && !cat) {
       onResults([]);
       setLoading(false);
       onLoadingChange?.(false);
@@ -53,7 +67,10 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&sort=${s}`);
+        const params = new URLSearchParams({ sort: s });
+        if (q.length >= 2) params.set("q", q);
+        if (cat) params.set("category", cat);
+        const res = await fetch(`/api/search?${params}`);
         const data = await res.json();
         onResults(data.results || []);
       } catch {
@@ -66,15 +83,19 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   }
 
   useEffect(() => {
-    doSearch(query, sort);
+    doSearch(query, sort, category);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, sort]);
+  }, [query, sort, category]);
 
   function handleQueryChange(q: string) {
     setQuery(q);
     onQueryChange?.(q);
+  }
+
+  function handleCategorySelect(slug: string) {
+    setCategory(category === slug ? "" : slug);
   }
 
   // Exposed for suggestion clicks
@@ -89,6 +110,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     (window as any).__setSearchQuery = setSearchQuery;
     return () => { delete (window as any).__setSearchQuery; };
   }, []);
+
+  const isSearchActive = query.length >= 2 || !!category;
 
   return (
     <div className="space-y-2">
@@ -111,8 +134,33 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
         )}
       </div>
 
-      {/* Sort controls — show when there are results */}
-      {query.length >= 2 && (
+      {/* Category filter pills */}
+      {categories.length > 0 && isSearchActive && (
+        <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
+          <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
+            {categories.map((cat) => (
+              <button
+                key={cat.slug}
+                onClick={() => handleCategorySelect(cat.slug)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-200 active:scale-95 whitespace-nowrap ${
+                  category === cat.slug
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {cat.name}
+                {category === cat.slug && (
+                  <X className="inline-block h-3 w-3 ml-1 -mr-0.5" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sort controls */}
+      {isSearchActive && (
         <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
           <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <div className="flex gap-1 flex-wrap">

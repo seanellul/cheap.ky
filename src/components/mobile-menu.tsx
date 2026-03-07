@@ -92,9 +92,9 @@ export function MobileMenu() {
           />
 
           {/* Drawer */}
-          <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-card border-l shadow-2xl animate-in slide-in-from-right duration-250">
+          <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] landscape:max-w-80 bg-card border-l shadow-2xl animate-in slide-in-from-right duration-250">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))" }}>
               <BrandLogo size="sm" showIcon />
               <Button
                 variant="ghost"

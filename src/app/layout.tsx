@@ -176,7 +176,7 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-4 pb-24 md:py-6 md:pb-6">
+          <main className="mx-auto max-w-6xl px-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:py-6 md:pb-6">
             {children}
           </main>
           <AppBanner />

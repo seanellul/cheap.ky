@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
              'store_id', sp.store_id,
              'price', sp.price,
              'sale_price', sp.sale_price,
-             'name', sp.name
+             'name', sp.name,
+            'updated_at', sp.updated_at
            )) AS store_prices
          FROM products p
          JOIN product_matches pm ON pm.product_id = p.id
@@ -47,12 +48,12 @@ export async function GET(req: NextRequest) {
       if (barcodeResults.length > 0) {
         const results = barcodeResults.map((row: Record<string, unknown>) => {
           const storePricesArr = row.store_prices as Array<{
-            store_id: string; price: number | null; sale_price: number | null; name: string;
+            store_id: string; price: number | null; sale_price: number | null; name: string; updated_at: string | null;
           }>;
-          const prices: Record<string, { price: number | null; salePrice: number | null; name: string }> = {};
+          const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null }> = {};
           for (const sp of storePricesArr) {
             if (!prices[sp.store_id]) {
-              prices[sp.store_id] = { price: sp.price, salePrice: sp.sale_price, name: sp.name };
+              prices[sp.store_id] = { price: sp.price, salePrice: sp.sale_price, name: sp.name, updatedAt: sp.updated_at ?? null };
             }
           }
           return {
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
       // No matched product — try unmatched store_products by UPC
       const unmatchedBarcode = await rawSql(
         `SELECT sp.id, sp.name, sp.brand, sp.size, sp.image_url, sp.store_id,
-                sp.price, sp.sale_price, COALESCE(sp.sale_price, sp.price) AS min_price
+                sp.price, sp.sale_price, sp.updated_at, COALESCE(sp.sale_price, sp.price) AS min_price
          FROM store_products sp
          WHERE sp.upc = $1 AND sp.price IS NOT NULL
          LIMIT 5`,
@@ -94,6 +95,7 @@ export async function GET(req: NextRequest) {
               price: sp.price != null ? Number(sp.price) : null,
               salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
               name: String(sp.name),
+              updatedAt: sp.updated_at ? String(sp.updated_at) : null,
             },
           },
           barcodeScan: true,
@@ -123,7 +125,8 @@ export async function GET(req: NextRequest) {
          'store_id', sp.store_id,
          'price', sp.price,
          'sale_price', sp.sale_price,
-         'name', sp.name
+         'name', sp.name,
+         'updated_at', sp.updated_at
        )) AS store_prices
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
@@ -153,6 +156,7 @@ export async function GET(req: NextRequest) {
        sp.store_id,
        sp.price,
        sp.sale_price,
+       sp.updated_at,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
      WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
@@ -182,9 +186,10 @@ export async function GET(req: NextRequest) {
       price: number | null;
       sale_price: number | null;
       name: string;
+      updated_at: string | null;
     }>;
 
-    const prices: Record<string, { price: number | null; salePrice: number | null; name: string }> = {};
+    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null }> = {};
     const storeSpIds: Record<string, number> = {};
     for (const sp of storePricesArr) {
       if (!prices[sp.store_id]) {
@@ -192,6 +197,7 @@ export async function GET(req: NextRequest) {
           price: sp.price,
           salePrice: sp.sale_price,
           name: sp.name,
+          updatedAt: sp.updated_at ?? null,
         };
         allSpIds.push(sp.sp_id);
         storeSpIds[sp.store_id] = sp.sp_id;
@@ -232,6 +238,7 @@ export async function GET(req: NextRequest) {
           price: sp.price != null ? Number(sp.price) : null,
           salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
           name: String(sp.name),
+          updatedAt: sp.updated_at ? String(sp.updated_at) : null,
         },
       },
       priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,

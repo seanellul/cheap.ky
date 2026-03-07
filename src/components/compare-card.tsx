@@ -4,6 +4,7 @@ import { ProductImage } from "@/components/product-image";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { PriceChangeIndicator } from "@/components/price-change-indicator";
+import { StalenessBadge } from "@/components/staleness-badge";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
@@ -17,7 +18,7 @@ interface CompareCardProps {
   minPrice: number;
   savings: number;
   maxPrice: number;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; updatedAt?: string | null }>;
   priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   onClick?: () => void;
 }
@@ -81,6 +82,7 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
               {priceChanges?.[storeId] && (
                 <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
               )}
+              <StalenessBadge updatedAt={p?.updatedAt} />
             </div>
           );
         })}

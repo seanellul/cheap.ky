@@ -14,6 +14,8 @@ import {
 } from "@/lib/blog/templates";
 import type { BlogArticle } from "@/lib/blog/types";
 
+export const maxDuration = 60; // allow up to 60s (Pro plan) or 10s (Hobby)
+
 const STORE_PAIRS: [string, string][] = [
   ["fosters", "hurleys"],
   ["fosters", "costuless"],
@@ -52,6 +54,16 @@ async function upsertArticle(article: BlogArticle, dataSnapshot?: object): Promi
   `;
 }
 
+/**
+ * Generate blog articles from price data.
+ *
+ * Query params:
+ *   ?type=weekly    - just the weekly report
+ *   ?type=gaps      - just the price gaps article
+ *   ?type=stores    - store vs store comparisons
+ *   ?type=categories - category spotlights
+ *   (no type)       - generate ALL articles
+ */
 export async function GET(request: Request) {
   // Verify cron secret — check both Vercel's cron header and manual Authorization header
   const cronSecret = process.env.CRON_SECRET;
@@ -61,51 +73,62 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type"); // weekly, gaps, stores, categories, or null for all
+
   const results: string[] = [];
 
   try {
     // Weekly report
-    const reportData = await getWeeklyReportData();
-    const report = weeklyReport(reportData);
-    await upsertArticle(report, reportData);
-    results.push(report.slug);
+    if (!type || type === "weekly") {
+      const reportData = await getWeeklyReportData();
+      const report = weeklyReport(reportData);
+      await upsertArticle(report, reportData);
+      results.push(report.slug);
+    }
 
     // Price gaps
-    const gaps = await getTopPriceGaps(30);
-    const date = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const gapsArticle = biggestPriceGaps(gaps, date);
-    await upsertArticle(gapsArticle, { gaps });
-    results.push(gapsArticle.slug);
+    if (!type || type === "gaps") {
+      const gaps = await getTopPriceGaps(30);
+      const date = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      const gapsArticle = biggestPriceGaps(gaps, date);
+      await upsertArticle(gapsArticle, { gaps });
+      results.push(gapsArticle.slug);
+    }
 
     // Store comparisons
-    for (const [a, b] of STORE_PAIRS) {
-      try {
-        const data = await getStoreComparisonData(a, b);
-        if (!data.storeA || !data.storeB || data.totalCompared < 10) continue;
-        const article = storeComparison(data);
-        await upsertArticle(article, { storeIdA: a, storeIdB: b });
-        results.push(article.slug);
-      } catch {
-        // skip failed pairs
+    if (!type || type === "stores") {
+      for (const [a, b] of STORE_PAIRS) {
+        try {
+          const data = await getStoreComparisonData(a, b);
+          if (!data.storeA || !data.storeB || data.totalCompared < 10) continue;
+          const article = storeComparison(data);
+          await upsertArticle(article, { storeIdA: a, storeIdB: b });
+          results.push(article.slug);
+        } catch {
+          // skip failed pairs
+        }
       }
     }
 
     // Category spotlights
-    const catRows = await taggedSql`
-      SELECT DISTINCT SPLIT_PART(category_raw, ' / ', 1) AS cat
-      FROM store_products
-      WHERE category_raw IS NOT NULL AND price IS NOT NULL
-      ORDER BY cat
-    `;
-    for (const row of catRows as any[]) {
-      try {
-        const data = await getCategorySpotlightData(row.cat);
-        if (!data || data.productCount < 5 || data.topGaps.length < 3) continue;
-        const article = categorySpotlight(data);
-        await upsertArticle(article);
-        results.push(article.slug);
-      } catch {
-        // skip failed categories
+    if (!type || type === "categories") {
+      const catRows = await taggedSql`
+        SELECT DISTINCT SPLIT_PART(category_raw, ' / ', 1) AS cat
+        FROM store_products
+        WHERE category_raw IS NOT NULL AND price IS NOT NULL
+        ORDER BY cat
+      `;
+      for (const row of catRows as any[]) {
+        try {
+          const data = await getCategorySpotlightData(row.cat);
+          if (!data || data.productCount < 5 || data.topGaps.length < 3) continue;
+          const article = categorySpotlight(data);
+          await upsertArticle(article);
+          results.push(article.slug);
+        } catch {
+          // skip failed categories
+        }
       }
     }
 

@@ -22,17 +22,17 @@ const STAPLE_ITEMS = [
 
   // Seafood
   { name: "Salmon Steak/Fillet", category: "Seafood", keywords: ["salmon fillet", "salmon steak", "salmon portion"] },
-  { name: "Tuna Cans", category: "Seafood", keywords: ["tuna can", "tuna chunk", "tuna solid", "starkist tuna", "bumble bee tuna"] },
+  { name: "Tuna Cans", category: "Seafood", keywords: ["tuna chunk", "tuna solid", "starkist tuna", "bumble bee tuna", "canned tuna", "tuna in water", "tuna in oil", "tuna light"] },
 
   // Dairy & Eggs
   { name: "Eggs (Dozen)", category: "Dairy & Eggs", keywords: ["egg", "eggs dozen", "large egg", "local egg"] },
-  { name: "Milk (Fresh)", category: "Dairy & Eggs", keywords: ["whole milk", "2% milk", "1% milk", "fresh milk"] },
+  { name: "Milk (Fresh)", category: "Dairy & Eggs", keywords: ["whole milk", "2% milk", "1% milk", "fresh milk", "milk gal", "milk quart", "milk half"] },
   { name: "Cheddar Cheese", category: "Dairy & Eggs", keywords: ["cheddar cheese", "cheddar block", "mild cheddar", "sharp cheddar"] },
 
   // Bakery & Pantry
   { name: "Bread (White)", category: "Bakery & Pantry", keywords: ["white bread", "sandwich bread"] },
   { name: "Pasta", category: "Bakery & Pantry", keywords: ["spaghetti", "penne", "pasta"] },
-  { name: "Olives", category: "Bakery & Pantry", keywords: ["olive", "green olive", "black olive", "kalamata"] },
+  { name: "Olives", category: "Bakery & Pantry", keywords: ["green olives", "black olives", "kalamata olives", "stuffed olives", "pitted olives"] },
 
   // Pet
   { name: "Cat Food", category: "Pet", keywords: ["cat food", "cat chow"] },

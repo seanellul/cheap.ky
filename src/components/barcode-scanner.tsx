@@ -17,14 +17,27 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   useEffect(() => {
     let mounted = true;
+    const onScanRef = onScan;
 
     async function startScanner() {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
+        // Check for camera API support before importing the library
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          if (mounted) {
+            setError("Camera is not supported on this browser. Try opening the site in Safari or Chrome.");
+            setStarting(false);
+          }
+          return;
+        }
+
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import("html5-qrcode");
 
         if (!mounted || !scannerRef.current) return;
 
-        const { Html5QrcodeSupportedFormats } = await import("html5-qrcode");
+        // Verify the container element still exists in the DOM
+        const container = document.getElementById("barcode-reader");
+        if (!container) return;
+
         const scanner = new Html5Qrcode("barcode-reader", {
           verbose: false,
           formatsToSupport: [
@@ -36,29 +49,49 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         });
         html5QrcodeRef.current = scanner;
 
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 280, height: 160 },
-            aspectRatio: 1.5,
-          },
-          (decodedText: string) => {
-            if (hasScanned.current) return;
-            hasScanned.current = true;
+        const scanConfig = {
+          fps: 15,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => ({
+            width: Math.floor(viewfinderWidth * 0.85),
+            height: Math.floor(viewfinderHeight * 0.4),
+          }),
+          aspectRatio: 1.5,
+          disableFlip: true,
+        };
 
-            // Vibrate on scan if available
-            if (navigator.vibrate) navigator.vibrate(100);
+        const onSuccess = (decodedText: string) => {
+          if (hasScanned.current) return;
+          hasScanned.current = true;
+          if (navigator.vibrate) navigator.vibrate(100);
+          onScanRef(decodedText);
+          scanner.stop().catch(() => {});
+        };
 
-            onScan(decodedText);
+        const onFailure = () => {
+          // No barcode found in frame — ignore
+        };
 
-            // Stop scanner after successful scan
-            scanner.stop().catch(() => {});
-          },
-          () => {
-            // Scan error (no barcode found in frame) — ignore
-          }
-        );
+        // Request high resolution for iOS WebKit which defaults to low res
+        try {
+          await scanner.start(
+            {
+              facingMode: { exact: "environment" },
+              width: { min: 640, ideal: 1280 },
+              height: { min: 480, ideal: 720 },
+            },
+            scanConfig,
+            onSuccess,
+            onFailure
+          );
+        } catch {
+          // Fallback: some devices reject exact facingMode or resolution constraints
+          await scanner.start(
+            { facingMode: "environment" },
+            scanConfig,
+            onSuccess,
+            onFailure
+          );
+        }
 
         if (mounted) setStarting(false);
       } catch (err: unknown) {
@@ -79,11 +112,21 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     return () => {
       mounted = false;
-      if (html5QrcodeRef.current) {
-        html5QrcodeRef.current.stop().catch(() => {});
+      const scanner = html5QrcodeRef.current;
+      if (scanner) {
+        try {
+          const state = scanner.getState?.();
+          // Only stop if scanner is actively scanning (state 2 = SCANNING)
+          if (state === 2) {
+            scanner.stop().catch(() => {});
+          }
+        } catch {
+          // Scanner may already be disposed
+        }
       }
     };
-  }, [onScan]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">

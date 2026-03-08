@@ -185,7 +185,36 @@ export default async function StoreOverviewPage({ params }: PageProps) {
               <TrendingDown className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               Where {meta.name} Beats the Competition
             </h2>
-            <div className="border rounded-xl overflow-hidden">
+            {/* Mobile: card layout */}
+            <div className="sm:hidden space-y-2">
+              {bestProducts.map((p) => (
+                <div key={p.id} className="border rounded-xl p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/prices/${p.slug}`}
+                        className="text-sm font-medium hover:text-primary transition-colors line-clamp-1"
+                      >
+                        {p.name}
+                      </Link>
+                      {p.size && (
+                        <span className="text-xs text-muted-foreground ml-1">({p.size})</span>
+                      )}
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 flex-shrink-0">
+                      -{p.pctSavings}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1.5 text-sm">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">{formatKYD(p.storePrice)}</span>
+                    <span className="text-xs text-muted-foreground">vs {formatKYD(p.nextBestPrice)} next best</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block border rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/40">
@@ -195,7 +224,7 @@ export default async function StoreOverviewPage({ params }: PageProps) {
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
                       {meta.name}
                     </th>
-                    <th className="py-2.5 px-4 text-right text-sm font-medium hidden sm:table-cell">
+                    <th className="py-2.5 px-4 text-right text-sm font-medium">
                       Next Best
                     </th>
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
@@ -225,7 +254,7 @@ export default async function StoreOverviewPage({ params }: PageProps) {
                       <td className="py-3 px-4 text-right tabular-nums text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                         {formatKYD(p.storePrice)}
                       </td>
-                      <td className="py-3 px-4 text-right tabular-nums text-sm text-muted-foreground hidden sm:table-cell">
+                      <td className="py-3 px-4 text-right tabular-nums text-sm text-muted-foreground">
                         {formatKYD(p.nextBestPrice)}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -251,7 +280,36 @@ export default async function StoreOverviewPage({ params }: PageProps) {
             <p className="text-sm text-muted-foreground mb-3">
               Transparency matters. These products are cheaper at other stores.
             </p>
-            <div className="border rounded-xl overflow-hidden">
+            {/* Mobile: card layout */}
+            <div className="sm:hidden space-y-2">
+              {worstProducts.map((p) => (
+                <div key={p.id} className="border rounded-xl p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/prices/${p.slug}`}
+                        className="text-sm font-medium hover:text-primary transition-colors line-clamp-1"
+                      >
+                        {p.name}
+                      </Link>
+                      {p.size && (
+                        <span className="text-xs text-muted-foreground ml-1">({p.size})</span>
+                      )}
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 flex-shrink-0">
+                      +{p.pctPremium}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1.5 text-sm">
+                    <span className="font-semibold text-red-600 dark:text-red-400 tabular-nums">{formatKYD(p.storePrice)}</span>
+                    <span className="text-xs text-muted-foreground">vs {formatKYD(p.cheapestPrice)} cheapest</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block border rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/40">
@@ -261,7 +319,7 @@ export default async function StoreOverviewPage({ params }: PageProps) {
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
                       {meta.name}
                     </th>
-                    <th className="py-2.5 px-4 text-right text-sm font-medium hidden sm:table-cell">
+                    <th className="py-2.5 px-4 text-right text-sm font-medium">
                       Cheapest
                     </th>
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
@@ -291,7 +349,7 @@ export default async function StoreOverviewPage({ params }: PageProps) {
                       <td className="py-3 px-4 text-right tabular-nums text-sm font-semibold text-red-600 dark:text-red-400">
                         {formatKYD(p.storePrice)}
                       </td>
-                      <td className="py-3 px-4 text-right tabular-nums text-sm text-muted-foreground hidden sm:table-cell">
+                      <td className="py-3 px-4 text-right tabular-nums text-sm text-muted-foreground">
                         {formatKYD(p.cheapestPrice)}
                       </td>
                       <td className="py-3 px-4 text-right">

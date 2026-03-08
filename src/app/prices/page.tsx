@@ -4,7 +4,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getProductList, getTopCategories } from "@/lib/data/products";
 import { formatKYD } from "@/lib/utils/currency";
-import { ChevronRight, ChevronLeft, Tag, Store } from "lucide-react";
+import { ChevronRight, ChevronLeft, Tag, Store, Search } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { PriceSearchInput } from "./search-input";
 
 export const metadata: Metadata = {
@@ -157,11 +158,19 @@ export default async function PricesIndexPage({ searchParams }: PageProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            No products found. Try a different search or category.
-          </p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No products found"
+          description={
+            search
+              ? `We couldn't find anything matching "${search}". Try a different term or browse by category.`
+              : category
+                ? `No products in ${category} right now. Check back soon or browse all products.`
+                : "No products found. Try a different search or category."
+          }
+          actionLabel="Browse all products"
+          actionHref="/prices"
+        />
       )}
 
       {/* Pagination */}

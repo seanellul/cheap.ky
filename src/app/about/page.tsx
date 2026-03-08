@@ -160,6 +160,7 @@ export default function AboutPage() {
 
             <section id="key-facts">
               <h2>Key Facts</h2>
+              <div className="overflow-x-auto">
               <table>
                 <tbody>
                   <tr>
@@ -230,10 +231,12 @@ export default function AboutPage() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </section>
 
             <section id="stores">
               <h2>Stores We Track</h2>
+              <div className="overflow-x-auto">
               <table>
                 <thead>
                   <tr>
@@ -270,6 +273,7 @@ export default function AboutPage() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </section>
 
             <section id="features">

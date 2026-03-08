@@ -126,7 +126,7 @@ export async function getRelatedProducts(
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
      JOIN store_products sp ON pm.store_product_id = sp.id
-     WHERE sp.category_raw LIKE $1
+     WHERE sp.category_raw ILIKE $1
        AND p.id != $2
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      HAVING COUNT(DISTINCT sp.store_id) >= 2
@@ -202,7 +202,7 @@ export async function getTopCategories(): Promise<string[]> {
          END
        )) as category
      FROM store_products
-     WHERE category_raw IS NOT NULL AND category_raw LIKE 'Shop / %'
+     WHERE category_raw IS NOT NULL AND category_raw ILIKE 'Shop / %'
      ORDER BY category`
   );
 

@@ -3,7 +3,7 @@ import { rawSql } from "@/lib/db";
 import { toSlug, productToSlug } from "@/lib/utils/slug";
 import { getBlogSlugs } from "@/lib/blog/data";
 
-const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright"];
+const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://cheap.ky";

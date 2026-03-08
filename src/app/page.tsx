@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { SearchBar } from "@/components/search-bar";
 import { SearchBubbles } from "@/components/search-bubbles";
+import { RecentSearches } from "@/components/recent-searches";
 import { ProductCard } from "@/components/product-card";
 import {
   PriceComparisonRow,
@@ -202,13 +203,16 @@ function HomePageContent() {
         onFocusChange={setSearchFocused}
       />
 
-      {/* ── Search bubbles (landing state) ── */}
+      {/* ── Recent searches + bubbles (landing state) ── */}
       {showBubbles && (
-        <div className="pt-1 animate-slide-up-fade">
-          <p className="text-center text-xs text-muted-foreground mb-1.5">
-            Tap to search
-          </p>
-          <SearchBubbles onSelect={handleBubbleSelect} />
+        <div className="pt-1 space-y-3 animate-slide-up-fade">
+          <RecentSearches onSelect={handleBubbleSelect} />
+          <div>
+            <p className="text-center text-xs text-muted-foreground mb-1.5">
+              Tap to search
+            </p>
+            <SearchBubbles onSelect={handleBubbleSelect} />
+          </div>
         </div>
       )}
 

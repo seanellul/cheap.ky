@@ -64,3 +64,16 @@ export function trackAppRequest(platform: "ios" | "android") {
 export function trackBarcodeScan(barcode: string, found: boolean, resultCount: number) {
   capture("barcode_scan", { barcode, found, result_count: resultCount });
 }
+
+// Onboarding
+export function trackOnboardingStarted() {
+  capture("onboarding_started");
+}
+
+export function trackOnboardingCompleted(stepsViewed: number) {
+  capture("onboarding_completed", { steps_viewed: stepsViewed });
+}
+
+export function trackOnboardingSkipped(atStep: number) {
+  capture("onboarding_skipped", { at_step: atStep });
+}

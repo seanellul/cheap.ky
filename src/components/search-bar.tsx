@@ -177,6 +177,7 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   const acDebounceRef = useRef<NodeJS.Timeout>(null);
   const acAbortRef = useRef<AbortController | null>(null);
   const hasSearchedRef = useRef(false);
+  const lastResultCountRef = useRef(0);
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768 && /Mobi|Android/i.test(navigator.userAgent));
@@ -208,10 +209,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
         onSuggestions?.(data.suggestions || []);
         if (data.types) setTypes(data.types);
         hasSearchedRef.current = true;
+        lastResultCountRef.current = results.length;
         setShowDropdown(false);
-        if (results.length > 0) {
-          addSearchEntry(q, results.length);
-        }
       } catch {
         onResults([]);
       } finally {
@@ -289,6 +288,12 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
 
   const sectionCount = [recentSuggestions.length > 0, suggestions.length > 0, catSuggestions.length > 0].filter(Boolean).length;
 
+  function saveToHistory(q: string) {
+    if (q.length >= 2) {
+      addSearchEntry(q, lastResultCountRef.current);
+    }
+  }
+
   function selectSuggestion(value: string) {
     setQuery(value);
     onQueryChange?.(value);
@@ -296,6 +301,7 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     setShowDropdown(false);
     setActiveIndex(-1);
     hasSearchedRef.current = false;
+    saveToHistory(value);
     inputRef.current?.focus();
   }
 
@@ -307,6 +313,17 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      if (showDropdown && activeIndex >= 0 && allItems.length > 0) {
+        e.preventDefault();
+        selectSuggestion(allItems[activeIndex].value);
+      } else {
+        saveToHistory(query);
+        setShowDropdown(false);
+      }
+      return;
+    }
+
     if (!showDropdown || allItems.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -315,9 +332,6 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex((prev) => (prev <= 0 ? allItems.length - 1 : prev - 1));
-    } else if (e.key === "Enter" && activeIndex >= 0) {
-      e.preventDefault();
-      selectSuggestion(allItems[activeIndex].value);
     } else if (e.key === "Escape") {
       setShowDropdown(false);
       setActiveIndex(-1);

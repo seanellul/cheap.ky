@@ -125,23 +125,28 @@ async function generateStoreComparisons(): Promise<number> {
 async function generateCategorySpotlights(): Promise<number> {
   console.log("Generating category spotlight articles...");
 
-  // Get actual top-level categories from DB
+  // Get second-level categories from DB (e.g. "Shop / Dairy" -> "Dairy")
   const catRows = await taggedSql`
-    SELECT DISTINCT SPLIT_PART(category_raw, ' / ', 1) AS cat
-    FROM store_products
-    WHERE category_raw IS NOT NULL AND price IS NOT NULL
+    SELECT cat, COUNT(*) AS cnt FROM (
+      SELECT DISTINCT
+        CASE
+          WHEN POSITION(' / ' IN category_raw) > 0
+          THEN SPLIT_PART(category_raw, ' / ', 2)
+          ELSE SPLIT_PART(category_raw, ' / ', 1)
+        END AS cat
+      FROM store_products
+      WHERE category_raw IS NOT NULL
+        AND price IS NOT NULL
+        AND category_raw NOT IN ('Shop')
+    ) sub
+    WHERE cat != '' AND cat != 'Shop'
+    GROUP BY cat
     ORDER BY cat
   `;
   const dbCategories = (catRows as any[]).map((r: any) => r.cat).filter(Boolean);
 
-  // Use intersection of our target list and what exists, plus any large DB categories
-  const targetSet = new Set(SPOTLIGHT_CATEGORIES.map((c) => c.toLowerCase()));
-  const categories = dbCategories.filter(
-    (c: string) => targetSet.has(c.toLowerCase()) || true // generate for all categories
-  );
-
   let count = 0;
-  for (const cat of categories) {
+  for (const cat of dbCategories) {
     try {
       const data = await getCategorySpotlightData(cat);
       if (!data || data.productCount < 5 || data.topGaps.length < 3) {

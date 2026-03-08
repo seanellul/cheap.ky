@@ -65,6 +65,19 @@ export function trackBarcodeScan(barcode: string, found: boolean, resultCount: n
   capture("barcode_scan", { barcode, found, result_count: resultCount });
 }
 
+// Onboarding
+export function trackOnboardingStarted() {
+  capture("onboarding_started");
+}
+
+export function trackOnboardingCompleted(stepsViewed: number) {
+  capture("onboarding_completed", { steps_viewed: stepsViewed });
+}
+
+export function trackOnboardingSkipped(atStep: number) {
+  capture("onboarding_skipped", { at_step: atStep });
+}
+
 // PWA
 export function trackPWAPromptShown(trigger: string) {
   capture("pwa_prompt_shown", { trigger });

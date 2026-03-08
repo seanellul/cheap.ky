@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
 import { NavLink } from "@/components/nav-link";
 import { MobileMenu } from "@/components/mobile-menu";
+import { OnboardingOverlay } from "@/components/onboarding-overlay";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -190,6 +191,7 @@ export default function RootLayout({
           <PWAInstallPrompt />
           <BottomNav />
           <Toaster />
+          <OnboardingOverlay />
         </FavouritesProvider>
         </CartProvider>
         </ThemeProvider>

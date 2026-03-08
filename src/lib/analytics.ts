@@ -77,3 +77,16 @@ export function trackOnboardingCompleted(stepsViewed: number) {
 export function trackOnboardingSkipped(atStep: number) {
   capture("onboarding_skipped", { at_step: atStep });
 }
+
+// PWA
+export function trackPWAPromptShown(trigger: string) {
+  capture("pwa_prompt_shown", { trigger });
+}
+
+export function trackPWAInstall(platform: string) {
+  capture("pwa_install", { platform });
+}
+
+export function trackPWAPromptDismissed() {
+  capture("pwa_prompt_dismissed");
+}

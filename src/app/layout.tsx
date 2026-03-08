@@ -8,6 +8,7 @@ import { PostHogPageView } from "@/lib/contexts/posthog-provider";
 import { Suspense } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { AppBanner } from "@/components/app-banner";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { Toaster } from "@/components/ui/sonner";
 import { HeaderCartBadge } from "@/components/header-cart-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -53,6 +54,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
   metadataBase: new URL("https://www.cheap.ky"),
   openGraph: {
@@ -93,6 +95,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme:dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js")})}` }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -185,6 +188,7 @@ export default function RootLayout({
             {children}
           </main>
           <AppBanner />
+          <PWAInstallPrompt />
           <BottomNav />
           <Toaster />
           <OnboardingOverlay />

@@ -17,12 +17,26 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   useEffect(() => {
     let mounted = true;
+    const onScanRef = onScan;
 
     async function startScanner() {
       try {
+        // Check for camera API support before importing the library
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          if (mounted) {
+            setError("Camera is not supported on this browser. Try opening the site in Safari or Chrome.");
+            setStarting(false);
+          }
+          return;
+        }
+
         const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import("html5-qrcode");
 
         if (!mounted || !scannerRef.current) return;
+
+        // Verify the container element still exists in the DOM
+        const container = document.getElementById("barcode-reader");
+        if (!container) return;
 
         const scanner = new Html5Qrcode("barcode-reader", {
           verbose: false,
@@ -49,7 +63,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           if (hasScanned.current) return;
           hasScanned.current = true;
           if (navigator.vibrate) navigator.vibrate(100);
-          onScan(decodedText);
+          onScanRef(decodedText);
           scanner.stop().catch(() => {});
         };
 
@@ -98,11 +112,21 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     return () => {
       mounted = false;
-      if (html5QrcodeRef.current) {
-        html5QrcodeRef.current.stop().catch(() => {});
+      const scanner = html5QrcodeRef.current;
+      if (scanner) {
+        try {
+          const state = scanner.getState?.();
+          // Only stop if scanner is actively scanning (state 2 = SCANNING)
+          if (state === 2) {
+            scanner.stop().catch(() => {});
+          }
+        } catch {
+          // Scanner may already be disposed
+        }
       }
     };
-  }, [onScan]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">

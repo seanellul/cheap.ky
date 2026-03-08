@@ -3,6 +3,9 @@
 import { ProductImage } from "@/components/product-image";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
+import { StalenessBadge } from "@/components/staleness-badge";
+import { FavouriteButton } from "@/components/favourite-button";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "costuless", "pricedright", "shopright"] as const;
@@ -16,11 +19,12 @@ interface CompareCardProps {
   minPrice: number;
   savings: number;
   maxPrice: number;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; updatedAt?: string | null }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   onClick?: () => void;
 }
 
-export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, maxPrice, prices, onClick }: CompareCardProps) {
+export function CompareCard({ id, name, brand, size, imageUrl, minPrice, savings, maxPrice, prices, priceChanges, onClick }: CompareCardProps) {
   let cheapestStore: string | null = null;
   let cheapestPrice = Infinity;
   for (const storeId of STORE_IDS) {
@@ -50,16 +54,19 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
             {[brand, size].filter(Boolean).join(" · ")}
           </div>
         </div>
-        {savings > 0 && (
-          <div className="text-right shrink-0">
-            <div className="text-sm font-bold text-savings tabular-nums">
-              {formatKYD(savings)}
+        <div className="flex items-start gap-1 shrink-0">
+          {savings > 0 && (
+            <div className="text-right">
+              <div className="text-sm font-bold text-savings tabular-nums">
+                {formatKYD(savings)}
+              </div>
+              {savingsPct > 0 && (
+                <div className="text-[10px] text-muted-foreground">{savingsPct}% less</div>
+              )}
             </div>
-            {savingsPct > 0 && (
-              <div className="text-[10px] text-muted-foreground">{savingsPct}% less</div>
-            )}
-          </div>
-        )}
+          )}
+          <FavouriteButton productId={id} />
+        </div>
       </div>
       <div className="flex flex-wrap gap-1">
         {STORE_IDS.map((storeId) => {
@@ -76,6 +83,10 @@ export function CompareCard({ name, brand, size, imageUrl, minPrice, savings, ma
             >
               <StoreBadge storeId={storeId} size="sm" />
               <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+              {priceChanges?.[storeId] && (
+                <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
+              )}
+              <StalenessBadge updatedAt={p?.updatedAt} />
             </div>
           );
         })}

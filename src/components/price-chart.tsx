@@ -17,6 +17,7 @@ const STORE_COLORS: Record<string, string> = {
   hurleys: "#dc2626",
   kirkmarket: "#16a34a",
   costuless: "#9333ea",
+  pricedright: "#f97316",
 };
 
 interface PricePoint {

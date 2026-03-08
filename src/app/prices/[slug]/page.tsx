@@ -6,10 +6,14 @@ import type { Metadata } from "next";
 import {
   getProductBySlug,
   getRelatedProducts,
+  getProductSlugs,
+  transformHistoryForChart,
 } from "@/lib/data/products";
+import { PriceChartWrapper } from "@/components/price-chart-wrapper";
 import { formatKYD } from "@/lib/utils/currency";
 import { productToSlug } from "@/lib/utils/slug";
 import { ChevronRight, ExternalLink, TrendingDown, Tag, Store, BarChart3 } from "lucide-react";
+import { ProductRating } from "@/components/product-rating";
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -81,6 +85,13 @@ export async function generateMetadata({
   };
 }
 
+// ── Static params ─────────────────────────────────────────────────────
+
+export async function generateStaticParams() {
+  const slugs = await getProductSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
+
 // ── Page ───────────────────────────────────────────────────────────────
 
 export default async function ProductPricePage({ params }: PageProps) {
@@ -88,7 +99,7 @@ export default async function ProductPricePage({ params }: PageProps) {
   const data = await getProductBySlug(slug);
   if (!data) notFound();
 
-  const { product, storePrices, history, categoryRaw } = data;
+  const { product, storePrices, history, categoryRaw, ratings } = data;
 
   // Compute cheapest store
   let cheapestPrice = Infinity;
@@ -130,8 +141,10 @@ export default async function ProductPricePage({ params }: PageProps) {
   // Related products
   const related = await getRelatedProducts(product.id, categoryRaw, 8);
 
-  // Price history summary
+  // Price history
   const hasHistory = history.length > 0;
+  const { data: chartData, storeIds: chartStoreIds } =
+    transformHistoryForChart(history);
 
   // Best image: prefer product-level, fall back to first store product image
   const displayImage =
@@ -160,11 +173,35 @@ export default async function ProductPricePage({ params }: PageProps) {
     })),
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://cheap.ky" },
+      { "@type": "ListItem", position: 2, name: "Prices", item: "https://cheap.ky/prices" },
+      ...(topCategory
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: topCategory,
+              item: `https://cheap.ky/prices?category=${encodeURIComponent(topCategory)}`,
+            },
+            { "@type": "ListItem", position: 4, name: product.canonical_name },
+          ]
+        : [{ "@type": "ListItem", position: 3, name: product.canonical_name }]),
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <div className="space-y-8">
@@ -274,6 +311,9 @@ export default async function ProductPricePage({ params }: PageProps) {
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
                       Price
                     </th>
+                    <th className="py-2.5 px-4 text-center text-sm font-medium">
+                      Worth it?
+                    </th>
                     <th className="py-2.5 px-4 text-right text-sm font-medium hidden sm:table-cell">
                       Link
                     </th>
@@ -298,13 +338,15 @@ export default async function ProductPricePage({ params }: PageProps) {
                         }`}
                       >
                         <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                              STORE_COLORS[sp.store_id] ?? "bg-muted text-foreground"
-                            }`}
-                          >
-                            {STORE_SHORT_NAMES[sp.store_id] ?? sp.store_id}
-                          </span>
+                          <Link href={`/store/${sp.store_id}`}>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium hover:opacity-80 transition-opacity ${
+                                STORE_COLORS[sp.store_id] ?? "bg-muted text-foreground"
+                              }`}
+                            >
+                              {STORE_SHORT_NAMES[sp.store_id] ?? sp.store_id}
+                            </span>
+                          </Link>
                         </td>
                         <td className="py-3 px-4 text-sm text-muted-foreground hidden sm:table-cell">
                           <span className="line-clamp-1">{sp.name}</span>
@@ -330,6 +372,14 @@ export default async function ProductPricePage({ params }: PageProps) {
                             </div>
                           )}
                         </td>
+                        <td className="py-3 px-4 text-center">
+                          <ProductRating
+                            productId={product.id}
+                            storeId={sp.store_id}
+                            initialUp={ratings[sp.store_id]?.up ?? 0}
+                            initialDown={ratings[sp.store_id]?.down ?? 0}
+                          />
+                        </td>
                         <td className="py-3 px-4 text-right hidden sm:table-cell">
                           {sp.source_url && (
                             <a
@@ -352,30 +402,34 @@ export default async function ProductPricePage({ params }: PageProps) {
           </section>
         )}
 
-        {/* Price history note */}
-        {hasHistory && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-              Price History
-            </h2>
+        {/* Price history chart */}
+        <section>
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            Price History
+          </h2>
+          {chartData.length >= 2 ? (
+            <div className="border rounded-xl p-4">
+              <PriceChartWrapper data={chartData} storeIds={chartStoreIds} />
+            </div>
+          ) : (
             <div className="border rounded-xl p-4 bg-muted/20">
               <p className="text-sm text-muted-foreground">
-                We have tracked{" "}
-                <span className="font-medium text-foreground">
-                  {history.length}
-                </span>{" "}
-                price data point{history.length === 1 ? "" : "s"} for this
-                product across{" "}
-                <span className="font-medium text-foreground">
-                  {new Set(history.map((h) => h.store_id)).size}
-                </span>{" "}
-                store{new Set(history.map((h) => h.store_id)).size === 1 ? "" : "s"}.
-                Price tracking helps you know when prices drop.
+                Price tracking just started for this product.
+                {hasHistory && (
+                  <>
+                    {" "}We have{" "}
+                    <span className="font-medium text-foreground">
+                      {history.length}
+                    </span>{" "}
+                    data point{history.length === 1 ? "" : "s"} so far.
+                  </>
+                )}
+                {" "}Check back soon for price trends.
               </p>
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         {/* Related products */}
         {related.length > 0 && (

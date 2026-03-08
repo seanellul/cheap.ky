@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { StoreBadge } from "@/components/store-badge";
 import { ProductImage } from "@/components/product-image";
 import { PriceDisplay } from "@/components/price-display";
+import { StalenessBadge } from "@/components/staleness-badge";
 
 interface StoreMatch {
   storeProductId: number;
@@ -26,6 +27,7 @@ interface StoreMatch {
   upc: string | null;
   categoryRaw: string | null;
   sourceUrl: string | null;
+  updatedAt: string | null;
   matchMethod: string;
   confidence: number;
 }
@@ -133,8 +135,9 @@ export function CompareDetailDialog({ productId, onClose }: CompareDetailDialogP
                     </div>
 
                     {/* Price */}
-                    <div className="text-center">
+                    <div className="text-center space-y-1">
                       <PriceDisplay price={m.price} salePrice={m.salePrice} isCheapest={isCheapest} className="text-lg" />
+                      <StalenessBadge updatedAt={m.updatedAt} />
                     </div>
 
                     {/* Product details */}

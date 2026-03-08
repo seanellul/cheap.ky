@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
   const sort = req.nextUrl.searchParams.get("sort") || "relevance";
   const typeFilter = req.nextUrl.searchParams.get("type") || "";
+  const storeFilter = req.nextUrl.searchParams.get("store") || "";
 
   if (q.length < 2) {
     return NextResponse.json({ results: [] });
@@ -21,6 +22,9 @@ export async function GET(req: NextRequest) {
   if (looksLikeBarcode(q)) {
     const normalized = normalizeUpc(q);
     if (normalized) {
+      const barcodeParams: string[] = [normalized];
+      if (storeFilter) barcodeParams.push(storeFilter);
+
       const barcodeResults = await rawSql(
         `SELECT
            p.id,
@@ -40,10 +44,10 @@ export async function GET(req: NextRequest) {
          FROM products p
          JOIN product_matches pm ON pm.product_id = p.id
          JOIN store_products sp ON pm.store_product_id = sp.id
-         WHERE sp.upc = $1 AND sp.price IS NOT NULL
+         WHERE sp.upc = $1 AND sp.price IS NOT NULL${storeFilter ? ` AND sp.store_id = $2` : ""}
          GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
          LIMIT 5`,
-        [normalized]
+        barcodeParams
       );
 
       if (barcodeResults.length > 0) {
@@ -73,13 +77,16 @@ export async function GET(req: NextRequest) {
       }
 
       // No matched product — try unmatched store_products by UPC
+      const unmatchedBarcodeParams: string[] = [normalized];
+      if (storeFilter) unmatchedBarcodeParams.push(storeFilter);
+
       const unmatchedBarcode = await rawSql(
         `SELECT sp.id, sp.name, sp.brand, sp.size, sp.image_url, sp.store_id,
                 sp.price, sp.sale_price, sp.updated_at, COALESCE(sp.sale_price, sp.price) AS min_price
          FROM store_products sp
-         WHERE sp.upc = $1 AND sp.price IS NOT NULL
+         WHERE sp.upc = $1 AND sp.price IS NOT NULL${storeFilter ? ` AND sp.store_id = $2` : ""}
          LIMIT 5`,
-        [normalized]
+        unmatchedBarcodeParams
       );
 
       if (unmatchedBarcode.length > 0) {
@@ -117,6 +124,11 @@ export async function GET(req: NextRequest) {
     ? `AND sp.category_raw ILIKE $${matchedParams.length + 1}`
     : "";
   if (typeFilter) matchedParams.push(`%${typeFilter}%`);
+  let matchedStoreCondition = "";
+  if (storeFilter) {
+    matchedParams.push(storeFilter);
+    matchedStoreCondition = ` AND sp.store_id = $${matchedParams.length}`;
+  }
 
   const matched = await rawSql(
     `SELECT
@@ -141,7 +153,7 @@ export async function GET(req: NextRequest) {
      JOIN store_products sp ON pm.store_product_id = sp.id
      WHERE (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)
        AND sp.price IS NOT NULL
-       ${matchedTypeCondition}
+       ${matchedTypeCondition}${matchedStoreCondition}
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      ORDER BY
        CASE WHEN $2 = 'price_asc' THEN MIN(COALESCE(sp.sale_price, sp.price)) END ASC NULLS LAST,
@@ -160,6 +172,11 @@ export async function GET(req: NextRequest) {
     ? `AND sp.category_raw ILIKE $${unmatchedParams.length + 1}`
     : "";
   if (typeFilter) unmatchedParams.push(`%${typeFilter}%`);
+  let unmatchedStoreCondition = "";
+  if (storeFilter) {
+    unmatchedParams.push(storeFilter);
+    unmatchedStoreCondition = ` AND sp.store_id = $${unmatchedParams.length}`;
+  }
 
   const unmatched = await rawSql(
     `SELECT
@@ -177,7 +194,7 @@ export async function GET(req: NextRequest) {
      FROM store_products sp
      WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
        AND sp.price IS NOT NULL
-       ${unmatchedTypeCondition}
+       ${unmatchedTypeCondition}${unmatchedStoreCondition}
        AND NOT EXISTS (
          SELECT 1 FROM product_matches pm WHERE pm.store_product_id = sp.id
        )

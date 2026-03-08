@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
-import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Clock, Tag } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Store, Clock, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { addSearchEntry, getSearchHistory } from "@/lib/history";
 import { ScannerErrorBoundary } from "@/components/scanner-error-boundary";
+import { STORE_META } from "@/lib/data/stores";
 
 const BarcodeScanner = lazy(() =>
   import("@/components/barcode-scanner").then((m) => ({ default: m.BarcodeScanner }))
@@ -157,9 +158,18 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "stores", label: "Most stores" },
 ];
 
+const STORE_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All stores" },
+  ...Object.entries(STORE_META).map(([key, meta]) => ({
+    value: key,
+    label: meta.name,
+  })),
+];
+
 export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange, onSuggestions }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
+  const [store, setStore] = useState("");
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -183,7 +193,7 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     setIsMobile(window.innerWidth < 768 && /Mobi|Android/i.test(navigator.userAgent));
   }, []);
 
-  function doSearch(q: string, s: SortOption, type: string | null) {
+  function doSearch(q: string, s: SortOption, type: string | null, storeId: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (q.length < 2) {
@@ -202,6 +212,7 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
       try {
         let url = `/api/search?q=${encodeURIComponent(q)}&sort=${s}`;
         if (type) url += `&type=${encodeURIComponent(type)}`;
+        if (storeId) url += `&store=${encodeURIComponent(storeId)}`;
         const res = await fetch(url);
         const data = await res.json();
         const results = data.results || [];
@@ -221,11 +232,11 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   }
 
   useEffect(() => {
-    doSearch(query, sort, activeType);
+    doSearch(query, sort, activeType, store);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, sort, activeType]);
+  }, [query, sort, activeType, store]);
 
   // Autocomplete fetching
   const fetchAutocomplete = useCallback((q: string) => {
@@ -440,6 +451,40 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Store filter pills */}
+      {query.length >= 2 && (
+        <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
+          <Store className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {STORE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStore(opt.value)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
+                  store === opt.value
+                    ? opt.value
+                      ? "ring-1"
+                      : "bg-foreground/10 text-foreground ring-1 ring-foreground/20"
+                    : "bg-transparent text-muted-foreground ring-1 ring-border hover:bg-muted/50"
+                }`}
+                style={
+                  store === opt.value && opt.value
+                    ? {
+                        backgroundColor: `color-mix(in oklch, var(--store-${opt.value}) 15%, transparent)`,
+                        color: `var(--store-${opt.value})`,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ["--tw-ring-color" as any]: `color-mix(in oklch, var(--store-${opt.value}) 30%, transparent)`,
+                      }
+                    : undefined
+                }
               >
                 {opt.label}
               </button>

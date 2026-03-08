@@ -299,5 +299,97 @@ export async function GET(req: NextRequest) {
   );
   const types = typesRows.map((r) => String(r.label));
 
-  return NextResponse.json({ results: results.slice(0, 50), types });
+  // If no results and not a barcode, try word-split fallback for suggestions
+  if (results.length === 0 && !looksLikeBarcode(q)) {
+    const words = q
+      .trim()
+      .split(/\s+/)
+      .slice(0, 3)
+      .filter((w) => w.length >= 2);
+    if (words.length > 0) {
+      const wordConditions = words
+        .map((_, i) => `p.canonical_name ILIKE $${i + 1}`)
+        .join(" OR ");
+      const wordParams = words.map((w) => `%${w}%`);
+
+      const suggestedMatched = await rawSql(
+        `SELECT
+           p.id,
+           p.canonical_name,
+           p.brand,
+           p.size,
+           p.image_url,
+           MIN(COALESCE(sp.sale_price, sp.price)) AS min_price,
+           COUNT(DISTINCT sp.store_id) AS store_count,
+           json_agg(json_build_object(
+             'sp_id', sp.id,
+             'store_id', sp.store_id,
+             'price', sp.price,
+             'sale_price', sp.sale_price,
+             'name', sp.name,
+             'updated_at', sp.updated_at
+           )) AS store_prices
+         FROM products p
+         JOIN product_matches pm ON pm.product_id = p.id
+         JOIN store_products sp ON pm.store_product_id = sp.id
+         WHERE (${wordConditions})
+           AND sp.price IS NOT NULL
+         GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
+         ORDER BY COUNT(DISTINCT sp.store_id) DESC, p.canonical_name ASC
+         LIMIT 6`,
+        wordParams
+      );
+
+      const suggestions = suggestedMatched.map(
+        (row: Record<string, unknown>) => {
+          const storePricesArr = row.store_prices as Array<{
+            sp_id: number;
+            store_id: string;
+            price: number | null;
+            sale_price: number | null;
+            name: string;
+            updated_at: string | null;
+          }>;
+          const prices: Record<
+            string,
+            {
+              price: number | null;
+              salePrice: number | null;
+              name: string;
+              updatedAt: string | null;
+            }
+          > = {};
+          for (const sp of storePricesArr) {
+            if (!prices[sp.store_id]) {
+              prices[sp.store_id] = {
+                price: sp.price,
+                salePrice: sp.sale_price,
+                name: sp.name,
+                updatedAt: sp.updated_at ?? null,
+              };
+            }
+          }
+          return {
+            id: Number(row.id),
+            name: String(row.canonical_name),
+            brand: row.brand as string | null,
+            size: row.size as string | null,
+            imageUrl: row.image_url as string | null,
+            minPrice:
+              row.min_price != null ? Number(row.min_price) : null,
+            storeCount: Number(row.store_count),
+            prices,
+          };
+        }
+      );
+
+      return NextResponse.json({ results: [], suggestions, types });
+    }
+  }
+
+  return NextResponse.json({
+    results: results.slice(0, 50),
+    suggestions: [],
+    types,
+  });
 }

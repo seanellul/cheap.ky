@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Search,
   ArrowLeftRight,
   ListChecks,
   BarChart3,
@@ -24,7 +23,7 @@ import {
   PriceComparisonHeader,
 } from "@/components/price-comparison-row";
 import { SearchResultSkeleton } from "@/components/skeletons";
-import { EmptyState } from "@/components/empty-state";
+import { SearchNoResults } from "@/components/search-no-results";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
@@ -114,6 +113,7 @@ function HomePageContent() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [resultKey, setResultKey] = useState(0);
   const { refreshCart } = useCart();
   const searchParams = useSearchParams();
@@ -201,6 +201,7 @@ function HomePageContent() {
         onLoadingChange={setLoading}
         onQueryChange={setQuery}
         onFocusChange={setSearchFocused}
+        onSuggestions={setSuggestions}
       />
 
       {/* ── Recent searches + bubbles (landing state) ── */}
@@ -278,10 +279,12 @@ function HomePageContent() {
 
       {/* Empty state */}
       {!loading && hasSearched && query.length >= 2 && results.length === 0 && (
-        <EmptyState
-          icon={Search}
-          title="No products found"
-          description="Try a different search term or check your spelling"
+        <SearchNoResults
+          query={query}
+          suggestions={suggestions}
+          onSelect={handleBubbleSelect}
+          onClickProduct={setSelectedProductId}
+          onAddToCart={handleAddToCart}
         />
       )}
 

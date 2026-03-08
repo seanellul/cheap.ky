@@ -27,6 +27,7 @@ interface SearchBarProps {
   onLoadingChange?: (loading: boolean) => void;
   onQueryChange?: (query: string) => void;
   onFocusChange?: (focused: boolean) => void;
+  onSuggestions?: (suggestions: SearchResult[]) => void;
 }
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
@@ -155,7 +156,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "stores", label: "Most stores" },
 ];
 
-export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange }: SearchBarProps) {
+export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange, onSuggestions }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [loading, setLoading] = useState(false);
@@ -203,6 +204,7 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
         const data = await res.json();
         const results = data.results || [];
         onResults(results);
+        onSuggestions?.(data.suggestions || []);
         if (data.types) setTypes(data.types);
         hasSearchedRef.current = true;
         setShowDropdown(false);

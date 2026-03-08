@@ -124,7 +124,7 @@ export default async function AnalyticsPage() {
         <section>
           <h2 className="text-lg font-semibold mb-3">Last 30 Days</h2>
           <div className="rounded-xl border bg-card p-4">
-            <div className="flex items-end gap-[2px] h-32">
+            <div className="flex items-end gap-[1px] sm:gap-[2px] h-24 sm:h-32">
               {daily.map((d) => {
                 const total = d.searches + d.productViews;
                 const maxTotal = Math.max(...daily.map((dd) => dd.searches + dd.productViews), 1);
@@ -187,37 +187,57 @@ export default async function AnalyticsPage() {
             Trending Searches This Week
           </h2>
           {trending.length > 0 ? (
-            <div className="rounded-xl border bg-card overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="py-2 px-3 text-left text-sm font-medium">#</th>
-                    <th className="py-2 px-3 text-left text-sm font-medium">Search Term</th>
-                    <th className="py-2 px-3 text-right text-sm font-medium">Searches</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trending.map((t, i) => (
-                    <tr key={t.query} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2 px-3 text-sm text-muted-foreground tabular-nums">
-                        {i + 1}
-                      </td>
-                      <td className="py-2 px-3">
-                        <Link
-                          href={`/?q=${encodeURIComponent(t.query)}`}
-                          className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                          {t.query}
-                        </Link>
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-sm">
-                        {t.count}
-                      </td>
+            <>
+              {/* Mobile: card layout */}
+              <div className="sm:hidden space-y-1.5">
+                {trending.map((t, i) => (
+                  <Link
+                    key={t.query}
+                    href={`/?q=${encodeURIComponent(t.query)}`}
+                    className="flex items-center justify-between gap-2 border rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs text-muted-foreground tabular-nums w-5 flex-shrink-0">{i + 1}</span>
+                      <span className="text-sm font-medium truncate">{t.query}</span>
+                    </div>
+                    <span className="text-sm tabular-nums text-muted-foreground flex-shrink-0">{t.count}</span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block rounded-xl border bg-card overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="py-2 px-3 text-left text-sm font-medium">#</th>
+                      <th className="py-2 px-3 text-left text-sm font-medium">Search Term</th>
+                      <th className="py-2 px-3 text-right text-sm font-medium">Searches</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {trending.map((t, i) => (
+                      <tr key={t.query} className="border-b last:border-0 hover:bg-muted/50">
+                        <td className="py-2 px-3 text-sm text-muted-foreground tabular-nums">
+                          {i + 1}
+                        </td>
+                        <td className="py-2 px-3">
+                          <Link
+                            href={`/?q=${encodeURIComponent(t.query)}`}
+                            className="text-sm font-medium hover:text-primary transition-colors"
+                          >
+                            {t.query}
+                          </Link>
+                        </td>
+                        <td className="py-2 px-3 text-right tabular-nums text-sm">
+                          {t.count}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
               No searches yet. Be the first!
@@ -232,37 +252,57 @@ export default async function AnalyticsPage() {
             Most Viewed Products
           </h2>
           {popularWithSlugs.length > 0 ? (
-            <div className="rounded-xl border bg-card overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="py-2 px-3 text-left text-sm font-medium">#</th>
-                    <th className="py-2 px-3 text-left text-sm font-medium">Product</th>
-                    <th className="py-2 px-3 text-right text-sm font-medium">Views</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {popularWithSlugs.map((p, i) => (
-                    <tr key={p.productId} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2 px-3 text-sm text-muted-foreground tabular-nums">
-                        {i + 1}
-                      </td>
-                      <td className="py-2 px-3">
-                        <Link
-                          href={`/prices/${p.slug}`}
-                          className="text-sm font-medium hover:text-primary transition-colors line-clamp-1"
-                        >
-                          {p.name}
-                        </Link>
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-sm">
-                        {p.views}
-                      </td>
+            <>
+              {/* Mobile: card layout */}
+              <div className="sm:hidden space-y-1.5">
+                {popularWithSlugs.map((p, i) => (
+                  <Link
+                    key={p.productId}
+                    href={`/prices/${p.slug}`}
+                    className="flex items-center justify-between gap-2 border rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs text-muted-foreground tabular-nums w-5 flex-shrink-0">{i + 1}</span>
+                      <span className="text-sm font-medium truncate">{p.name}</span>
+                    </div>
+                    <span className="text-sm tabular-nums text-muted-foreground flex-shrink-0">{p.views}</span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block rounded-xl border bg-card overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="py-2 px-3 text-left text-sm font-medium">#</th>
+                      <th className="py-2 px-3 text-left text-sm font-medium">Product</th>
+                      <th className="py-2 px-3 text-right text-sm font-medium">Views</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {popularWithSlugs.map((p, i) => (
+                      <tr key={p.productId} className="border-b last:border-0 hover:bg-muted/50">
+                        <td className="py-2 px-3 text-sm text-muted-foreground tabular-nums">
+                          {i + 1}
+                        </td>
+                        <td className="py-2 px-3">
+                          <Link
+                            href={`/prices/${p.slug}`}
+                            className="text-sm font-medium hover:text-primary transition-colors line-clamp-1"
+                          >
+                            {p.name}
+                          </Link>
+                        </td>
+                        <td className="py-2 px-3 text-right tabular-nums text-sm">
+                          {p.views}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
               No product views yet.

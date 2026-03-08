@@ -209,3 +209,29 @@ export const stapleProducts = pgTable(
     uniqueIndex("staple_store_idx").on(table.stapleId, table.storeId),
   ]
 );
+
+// Community product ratings (thumbs up/down per product per store)
+export const productRatings = pgTable(
+  "product_ratings",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id),
+    storeId: text("store_id")
+      .notNull()
+      .references(() => stores.id),
+    rating: integer("rating").notNull(), // 1 or -1
+    fingerprint: text("fingerprint").notNull(), // SHA-256(IP + User-Agent)
+    createdAt: timestamp("created_at")
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("rating_product_store_fingerprint_idx").on(
+      table.productId,
+      table.storeId,
+      table.fingerprint
+    ),
+  ]
+);

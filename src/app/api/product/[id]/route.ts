@@ -37,6 +37,7 @@ export async function GET(
       sp.upc,
       sp.category_raw,
       sp.source_url,
+      sp.updated_at,
       pm.match_method,
       pm.confidence,
       s.name as store_name
@@ -69,6 +70,7 @@ export async function GET(
       upc: m.upc,
       categoryRaw: m.category_raw,
       sourceUrl: m.source_url,
+      updatedAt: m.updated_at ? String(m.updated_at) : null,
       matchMethod: m.match_method,
       confidence: m.confidence,
     })),

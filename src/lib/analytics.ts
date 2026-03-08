@@ -59,3 +59,8 @@ export function trackAppBannerDismiss() {
 export function trackAppRequest(platform: "ios" | "android") {
   capture("app_request", { platform });
 }
+
+// Barcode scanner
+export function trackBarcodeScan(barcode: string, found: boolean, resultCount: number) {
+  capture("barcode_scan", { barcode, found, result_count: resultCount });
+}

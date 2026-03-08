@@ -6,9 +6,12 @@ import { ProductImage } from "@/components/product-image";
 import { Button } from "@/components/ui/button";
 import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
+import { StalenessBadge } from "@/components/staleness-badge";
 import { formatKYD } from "@/lib/utils/currency";
 import { CompareDetailDialog } from "@/components/compare-detail-dialog";
 import { CompareCard } from "@/components/compare-card";
+import { FavouriteButton } from "@/components/favourite-button";
 import { track } from "@/lib/utils/track";
 import { trackCompare } from "@/lib/analytics";
 
@@ -25,7 +28,8 @@ interface CompareItem {
   maxPrice: number;
   savings: number;
   categoryRaw: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; productName: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; productName: string; updatedAt?: string | null }>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
 interface CategoryOption {
@@ -195,6 +199,7 @@ export default function ComparePage() {
                 maxPrice={item.maxPrice}
                 savings={item.savings}
                 prices={item.prices}
+                priceChanges={item.priceChanges}
                 onClick={() => setSelectedProductId(item.id)}
               />
             ))}
@@ -230,8 +235,11 @@ export default function ComparePage() {
                           onClick={() => setSelectedProductId(item.id)}
                         >
                           <ProductImage src={item.imageUrl} alt={item.name} size="sm" />
-                          <div className="min-w-0">
-                            <div className="font-medium text-sm truncate max-w-[220px]">{item.name}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <div className="font-medium text-sm truncate max-w-[200px]">{item.name}</div>
+                              <FavouriteButton productId={item.id} />
+                            </div>
                             <div className="text-xs text-muted-foreground truncate">
                               {[item.brand, item.size].filter(Boolean).join(" - ")}
                             </div>
@@ -243,11 +251,20 @@ export default function ComparePage() {
                         const isCheapest = storeId === cheapest;
                         return (
                           <td key={storeId} className="py-3 px-2 text-center text-sm">
-                            <PriceDisplay
-                              price={p?.price ?? null}
-                              salePrice={p?.salePrice ?? null}
-                              isCheapest={isCheapest}
-                            />
+                            <div className="inline-flex flex-col items-center gap-0.5">
+                              <PriceDisplay
+                                price={p?.price ?? null}
+                                salePrice={p?.salePrice ?? null}
+                                isCheapest={isCheapest}
+                              />
+                              {item.priceChanges?.[storeId] && (
+                                <PriceChangeIndicator
+                                  direction={item.priceChanges[storeId].direction}
+                                  amount={item.priceChanges[storeId].amount}
+                                />
+                              )}
+                              {p && <StalenessBadge updatedAt={p.updatedAt} />}
+                            </div>
                           </td>
                         );
                       })}

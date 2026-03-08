@@ -13,6 +13,7 @@ import { PriceChartWrapper } from "@/components/price-chart-wrapper";
 import { formatKYD } from "@/lib/utils/currency";
 import { productToSlug } from "@/lib/utils/slug";
 import { ChevronRight, ExternalLink, TrendingDown, Tag, Store, BarChart3 } from "lucide-react";
+import { ProductRating } from "@/components/product-rating";
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ export default async function ProductPricePage({ params }: PageProps) {
   const data = await getProductBySlug(slug);
   if (!data) notFound();
 
-  const { product, storePrices, history, categoryRaw } = data;
+  const { product, storePrices, history, categoryRaw, ratings } = data;
 
   // Compute cheapest store
   let cheapestPrice = Infinity;
@@ -310,6 +311,9 @@ export default async function ProductPricePage({ params }: PageProps) {
                     <th className="py-2.5 px-4 text-right text-sm font-medium">
                       Price
                     </th>
+                    <th className="py-2.5 px-4 text-center text-sm font-medium">
+                      Worth it?
+                    </th>
                     <th className="py-2.5 px-4 text-right text-sm font-medium hidden sm:table-cell">
                       Link
                     </th>
@@ -367,6 +371,14 @@ export default async function ProductPricePage({ params }: PageProps) {
                               {formatKYD(sp.price)}
                             </div>
                           )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <ProductRating
+                            productId={product.id}
+                            storeId={sp.store_id}
+                            initialUp={ratings[sp.store_id]?.up ?? 0}
+                            initialDown={ratings[sp.store_id]?.down ?? 0}
+                          />
                         </td>
                         <td className="py-3 px-4 text-right hidden sm:table-cell">
                           {sp.source_url && (

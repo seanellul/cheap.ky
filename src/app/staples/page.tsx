@@ -13,6 +13,8 @@ import { StapleDetailPanel } from "@/components/staple-detail-panel";
 import { CategoryStrip, type CategoryConfig } from "@/components/category-strip";
 import { AisleSection } from "@/components/aisle-section";
 import { cn } from "@/lib/utils";
+import { PriceChangeIndicator } from "@/components/price-change-indicator";
+import { StalenessBadge } from "@/components/staleness-badge";
 import { trackStapleExpand, trackStapleAddToCart, trackBatchAddToCart } from "@/lib/analytics";
 
 // ── Types ──
@@ -25,6 +27,7 @@ interface StaplePrice {
   size: string | null;
   imageUrl: string | null;
   autoMatched: boolean | null;
+  updatedAt?: string | null;
 }
 
 interface Staple {
@@ -32,6 +35,7 @@ interface Staple {
   name: string;
   category: string;
   prices: Record<string, StaplePrice>;
+  priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
 }
 
 interface SearchResult {
@@ -554,6 +558,13 @@ function StaplesPage() {
                                 {p.originalPrice != null ? formatKYD(p.originalPrice) : ""}
                               </span>
                             )}
+                            {staple.priceChanges?.[p.storeId] && (
+                              <PriceChangeIndicator
+                                direction={staple.priceChanges[p.storeId].direction}
+                                amount={staple.priceChanges[p.storeId].amount}
+                              />
+                            )}
+                            <StalenessBadge updatedAt={staple.prices[p.storeId]?.updatedAt} />
                           </div>
                         ))}
                       </div>
@@ -660,6 +671,13 @@ function StaplesPage() {
                                           {formatKYD(p.price!)}
                                         </span>
                                       )}
+                                      {staple.priceChanges?.[s.id] && (
+                                        <PriceChangeIndicator
+                                          direction={staple.priceChanges[s.id].direction}
+                                          amount={staple.priceChanges[s.id].amount}
+                                        />
+                                      )}
+                                      <StalenessBadge updatedAt={p.updatedAt} />
                                     </div>
                                   ) : isAdmin ? (
                                     <span className="text-muted-foreground/50 hover:text-primary text-xs cursor-pointer">+</span>

@@ -1,17 +1,18 @@
 import { db } from "../../db";
 import { storeProducts, products, productMatches } from "../../db/schema";
-import { eq, isNotNull, and, isNull } from "drizzle-orm";
+import { eq, isNotNull } from "drizzle-orm";
 
 export async function runUpcMatching(): Promise<number> {
   console.log("[match:upc] Starting UPC matching...");
 
   // Get all store products with UPCs that aren't yet matched
+  // UPCs are already normalized to 12/13 digits by the ingestion runner
   const withUpcs = await db
     .select()
     .from(storeProducts)
     .where(isNotNull(storeProducts.upc));
 
-  // Group by UPC
+  // Group by normalized UPC
   const upcGroups = new Map<string, typeof withUpcs>();
   for (const sp of withUpcs) {
     if (!sp.upc) continue;

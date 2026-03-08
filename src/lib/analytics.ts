@@ -60,6 +60,11 @@ export function trackAppRequest(platform: "ios" | "android") {
   capture("app_request", { platform });
 }
 
+// Barcode scanner
+export function trackBarcodeScan(barcode: string, found: boolean, resultCount: number) {
+  capture("barcode_scan", { barcode, found, result_count: resultCount });
+}
+
 // Onboarding
 export function trackOnboardingStarted() {
   capture("onboarding_started");

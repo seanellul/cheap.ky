@@ -126,6 +126,13 @@ export async function GET(request: Request) {
 
     // Category spotlights
     if (!type || type === "categories") {
+      // Clean up junk category spotlight posts (e.g. "Shop" root category)
+      await taggedSql`
+        DELETE FROM blog_posts
+        WHERE category = 'category-spotlight'
+          AND slug IN ('cheapest-shop-cayman', 'cheapest-store-cayman', 'cheapest-home-cayman', 'cheapest-all-cayman', 'cheapest-products-cayman', 'cheapest-featured-cayman')
+      `;
+
       const catRows = await taggedSql`
         SELECT cat, COUNT(*) AS cnt FROM (
           SELECT DISTINCT

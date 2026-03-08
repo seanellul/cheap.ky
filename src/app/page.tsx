@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
-  Search,
   ArrowLeftRight,
   ListChecks,
   BarChart3,
@@ -16,16 +16,17 @@ import {
 import { toast } from "sonner";
 import { SearchBar } from "@/components/search-bar";
 import { SearchBubbles } from "@/components/search-bubbles";
+import { RecentSearches } from "@/components/recent-searches";
 import { ProductCard } from "@/components/product-card";
 import {
   PriceComparisonRow,
   PriceComparisonHeader,
 } from "@/components/price-comparison-row";
 import { SearchResultSkeleton } from "@/components/skeletons";
-import { EmptyState } from "@/components/empty-state";
+import { SearchNoResults } from "@/components/search-no-results";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { useCart } from "@/lib/contexts/cart-context";
-import { trackSearch, trackAddToCart, trackProductView } from "@/lib/analytics";
+import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
 
 interface SearchResult {
@@ -97,6 +98,14 @@ function formatCount(n: number): string {
 }
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
+function HomePageContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -104,8 +113,22 @@ export default function HomePage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [resultKey, setResultKey] = useState(0);
   const { refreshCart } = useCart();
+  const searchParams = useSearchParams();
+
+  // Read ?q= param (e.g. from history page links) and trigger search
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      // Wait for SearchBar to mount and expose __setSearchQuery
+      const timer = setTimeout(() => {
+        (window as any).__setSearchQuery?.(q);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/stats")
@@ -134,8 +157,13 @@ export default function HomePage() {
     setHasSearched(true);
     setResultKey((k) => k + 1);
     if (query.length >= 2) {
-      track("search", query, { resultCount: r.length });
-      trackSearch(query, r.length);
+      const isBarcode = /^\d{8,14}$/.test(query.trim());
+      if (isBarcode) {
+        trackBarcodeScan(query, r.length > 0, r.length);
+      } else {
+        track("search", query, { resultCount: r.length });
+        trackSearch(query, r.length);
+      }
     }
   }
 
@@ -173,12 +201,14 @@ export default function HomePage() {
         onLoadingChange={setLoading}
         onQueryChange={setQuery}
         onFocusChange={setSearchFocused}
+        onSuggestions={setSuggestions}
       />
 
-      {/* ── Search bubbles (landing state) ── */}
+      {/* ── Recent searches + bubbles (landing state) ── */}
       {showBubbles && (
-        <div className="pt-1 animate-slide-up-fade">
-          <p className="text-center text-xs text-muted-foreground mb-1.5">
+        <div className="pt-1 space-y-3 animate-slide-up-fade">
+          <RecentSearches onSelect={handleBubbleSelect} />
+          <p className="text-center text-xs text-muted-foreground">
             Tap to search
           </p>
           <SearchBubbles onSelect={handleBubbleSelect} />
@@ -247,10 +277,12 @@ export default function HomePage() {
 
       {/* Empty state */}
       {!loading && hasSearched && query.length >= 2 && results.length === 0 && (
-        <EmptyState
-          icon={Search}
-          title="No products found"
-          description="Try a different search term or check your spelling"
+        <SearchNoResults
+          query={query}
+          suggestions={suggestions}
+          onSelect={handleBubbleSelect}
+          onClickProduct={setSelectedProductId}
+          onAddToCart={handleAddToCart}
         />
       )}
 

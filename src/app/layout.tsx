@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { CartProvider } from "@/lib/contexts/cart-context";
+import { FavouritesProvider } from "@/lib/contexts/favourites-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { PostHogProvider } from "@/lib/contexts/posthog-provider";
 import { PostHogPageView } from "@/lib/contexts/posthog-provider";
@@ -154,6 +155,7 @@ export default function RootLayout({
         <Suspense fallback={null}><PostHogPageView /></Suspense>
         <ThemeProvider>
         <CartProvider>
+        <FavouritesProvider>
           <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-xl backdrop-saturate-150">
             <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-2.5 md:py-3">
               <a href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
@@ -171,19 +173,22 @@ export default function RootLayout({
                 <NavLink href="/blog">Blog</NavLink>
                 <NavLink href="/guides/grocery-prices-cayman-islands-2026">Guides</NavLink>
                 <NavLink href="/analytics">Analytics</NavLink>
+                <NavLink href="/favourites">Favourites</NavLink>
                 <NavLink href="/cart">Cart</NavLink>
+                <NavLink href="/history">History</NavLink>
                 <HeaderCartBadge />
                 <ThemeToggle />
               </nav>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-4 pb-24 md:py-6 md:pb-6">
+          <main className="mx-auto max-w-6xl px-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:py-6 md:pb-6">
             {children}
           </main>
           <AppBanner />
           <BottomNav />
           <Toaster />
           <OnboardingOverlay />
+        </FavouritesProvider>
         </CartProvider>
         </ThemeProvider>
         </PostHogProvider>

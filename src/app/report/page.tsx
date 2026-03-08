@@ -5,6 +5,7 @@ import { TrendingDown, Trophy, BarChart3, ArrowRight, Percent, DollarSign, Packa
 import { StoreBadge } from "@/components/store-badge";
 import { formatKYD } from "@/lib/utils/currency";
 import { trackReportView } from "@/lib/analytics";
+import { ReportSkeleton } from "@/components/skeletons";
 
 interface ReportData {
   overview: {
@@ -167,12 +168,7 @@ export default function ReportPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-xl font-bold sm:text-2xl">Market Report</h1>
-        <div className="animate-pulse space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-xl" />)}
-          </div>
-          {[1, 2, 3].map((i) => <div key={i} className="h-48 bg-muted rounded-xl" />)}
-        </div>
+        <ReportSkeleton />
       </div>
     );
   }
@@ -372,7 +368,38 @@ export default function ReportPage() {
                   &quot;If I spend $100 at Store A, the same products would cost me X at Store B&quot;
                   — averaged across all products both stores carry.
                 </p>
-                <div className="overflow-x-auto">
+
+                {/* Mobile: card layout */}
+                <div className="sm:hidden space-y-3">
+                  {ALL_STORE_IDS.map((fromStore) => (
+                    <div key={fromStore} className="border rounded-xl p-3 space-y-2">
+                      <div className="font-medium text-sm"><StoreBadge storeId={fromStore} /></div>
+                      <div className="text-xs text-muted-foreground">$100 here costs...</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {ALL_STORE_IDS.filter(s => s !== fromStore).map((toStore) => {
+                          const val = purchasingPower[fromStore]?.[toStore];
+                          const isCheaper = val != null && val < 100;
+                          const isMore = val != null && val > 100;
+                          return (
+                            <div key={toStore} className="flex items-center justify-between gap-1 text-sm">
+                              <span className="text-xs text-muted-foreground truncate">{STORE_NAMES[toStore]}</span>
+                              {val != null ? (
+                                <span className={`tabular-nums font-medium ${isCheaper ? "text-savings" : isMore ? "text-destructive" : ""}`}>
+                                  {formatKYD(val)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">--</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: table */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/40">
@@ -460,8 +487,45 @@ export default function ReportPage() {
         <p className="text-sm text-muted-foreground">
           The same product — wildly different prices depending on where you shop.
         </p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[500px]">
+        {/* Mobile: card layout */}
+        <div className="sm:hidden space-y-2">
+          {biggestGaps.map((item) => {
+            const cheapest = getCheapestStoreId(item);
+            return (
+              <div key={item.id} className="border rounded-xl p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm truncate">{item.name}</div>
+                    {item.size && <div className="text-xs text-muted-foreground">{item.size}</div>}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="font-bold text-destructive tabular-nums">{formatKYD(item.savings)}</span>
+                    <div className="text-[10px] text-muted-foreground">{item.pct_diff}% diff</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                  {ALL_STORE_IDS.map((s) => {
+                    const price = (item as Record<string, unknown>)[`${s}_price`] as number | null;
+                    if (price == null) return null;
+                    const isCheapest = s === cheapest;
+                    return (
+                      <div key={s} className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{STORE_NAMES[s]}</span>
+                        <span className={`tabular-nums ${isCheapest ? "font-bold text-savings" : ""}`}>
+                          {formatKYD(price)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/40">
                 <th className="py-2 px-3 text-left font-medium">Product</th>
@@ -514,8 +578,44 @@ export default function ReportPage() {
           <p className="text-sm text-muted-foreground">
             {threeStoreProducts.length > 0 ? "These products are sold at every store — the perfect comparison." : ""}
           </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[500px]">
+          {/* Mobile: card layout */}
+          <div className="sm:hidden space-y-2">
+            {threeStoreProducts.map((item) => {
+              const cheapest = getCheapestStoreId(item);
+              return (
+                <div key={item.id} className="border rounded-xl p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{item.name}</div>
+                      {item.size && <div className="text-xs text-muted-foreground">{item.size}</div>}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="font-bold text-destructive tabular-nums">{formatKYD(item.savings)}</span>
+                      <div className="text-[10px] text-muted-foreground">{item.pct_diff}% diff</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                    {ALL_STORE_IDS.map((s) => {
+                      const price = (item as Record<string, unknown>)[`${s}_price`] as number;
+                      const isCheapest = s === cheapest;
+                      return (
+                        <div key={s} className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">{STORE_NAMES[s]}</span>
+                          <span className={`tabular-nums ${isCheapest ? "font-bold text-savings" : ""}`}>
+                            {formatKYD(price)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40">
                   <th className="py-2 px-3 text-left font-medium">Product</th>
@@ -564,7 +664,31 @@ export default function ReportPage() {
         <p className="text-sm text-muted-foreground">
           Some product categories have much bigger cross-store price differences than others.
         </p>
-        <div className="overflow-x-auto">
+        {/* Mobile: card layout */}
+        <div className="sm:hidden space-y-2">
+          {categoryInsights.map((cat) => (
+            <div key={cat.category} className="border rounded-xl p-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-sm truncate">{cat.category}</span>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
+                  cat.avg_pct_diff >= 25 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  : cat.avg_pct_diff >= 15 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                }`}>
+                  {cat.avg_pct_diff}% gap
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{cat.product_count} products</span>
+                <span>avg {formatKYD(cat.avg_savings_per_item)}/item</span>
+                <span className="font-medium text-foreground tabular-nums">{formatKYD(cat.total_savings)} total</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/40">

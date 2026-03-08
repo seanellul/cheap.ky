@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
   const productIds = rows.map((r) => Number(r.product_id));
   const storePrices: Record<
     number,
-    Record<string, { price: number | null; salePrice: number | null; productName: string }>
+    Record<string, { price: number | null; salePrice: number | null; productName: string; updatedAt: string | null }>
   > = {};
   // Track spId per product+store for price change lookup
   const productStoreSpIds: Record<number, Record<string, number>> = {};
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
   if (productIds.length > 0) {
     const placeholders = productIds.map((_, i) => `$${i + 1}`).join(",");
     const priceRows = await rawSql(
-      `SELECT pm.product_id, sp.id as sp_id, sp.store_id, sp.price, sp.sale_price, sp.name
+      `SELECT pm.product_id, sp.id as sp_id, sp.store_id, sp.price, sp.sale_price, sp.name, sp.updated_at
        FROM product_matches pm
        JOIN store_products sp ON pm.store_product_id = sp.id
        WHERE pm.product_id IN (${placeholders}) AND pm.match_method = 'upc'`,
@@ -96,6 +96,7 @@ export async function GET(req: NextRequest) {
         price: row.price != null ? Number(row.price) : null,
         salePrice: row.sale_price != null ? Number(row.sale_price) : null,
         productName: String(row.name),
+        updatedAt: row.updated_at ? String(row.updated_at) : null,
       };
       if (!productStoreSpIds[pid]) productStoreSpIds[pid] = {};
       productStoreSpIds[pid][storeId] = spId;

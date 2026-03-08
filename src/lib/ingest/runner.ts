@@ -2,6 +2,7 @@ import { db } from "../db";
 import { storeProducts, priceHistory, stores } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import type { StoreAdapter, RawProduct } from "./types";
+import { normalizeUpc } from "../utils/upc";
 
 export async function runIngestion(adapter: StoreAdapter) {
   const storeId = adapter.storeId;
@@ -17,6 +18,9 @@ export async function runIngestion(adapter: StoreAdapter) {
 
   for (const product of products) {
     try {
+      // Normalize UPC to 12-digit UPC-A / 13-digit EAN-13 for barcode scanner compatibility
+      const normalizedUpc = normalizeUpc(product.upc);
+
       // Upsert store_product
       const existing = await db
         .select()
@@ -33,7 +37,7 @@ export async function runIngestion(adapter: StoreAdapter) {
         await db
           .update(storeProducts)
           .set({
-            upc: product.upc ?? existing[0].upc,
+            upc: normalizedUpc ?? existing[0].upc,
             name: product.name,
             brand: product.brand,
             description: product.description,
@@ -65,7 +69,7 @@ export async function runIngestion(adapter: StoreAdapter) {
           .values({
             storeId,
             sku: product.sku,
-            upc: product.upc,
+            upc: normalizedUpc,
             name: product.name,
             brand: product.brand,
             description: product.description,

@@ -208,12 +208,10 @@ function HomePageContent() {
       {showBubbles && (
         <div className="pt-1 space-y-3 animate-slide-up-fade">
           <RecentSearches onSelect={handleBubbleSelect} />
-          <div>
-            <p className="text-center text-xs text-muted-foreground mb-1.5">
-              Tap to search
-            </p>
-            <SearchBubbles onSelect={handleBubbleSelect} />
-          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            Tap to search
+          </p>
+          <SearchBubbles onSelect={handleBubbleSelect} />
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Clock, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { addSearchEntry, getSearchHistory } from "@/lib/history";
+import { ScannerErrorBoundary } from "@/components/scanner-error-boundary";
 
 const BarcodeScanner = lazy(() =>
   import("@/components/barcode-scanner").then((m) => ({ default: m.BarcodeScanner }))
@@ -401,12 +402,14 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
 
       {/* Barcode scanner overlay */}
       {scannerOpen && (
-        <Suspense fallback={null}>
-          <BarcodeScanner
-            onScan={handleBarcodeScan}
-            onClose={() => setScannerOpen(false)}
-          />
-        </Suspense>
+        <ScannerErrorBoundary onClose={() => setScannerOpen(false)}>
+          <Suspense fallback={null}>
+            <BarcodeScanner
+              onScan={handleBarcodeScan}
+              onClose={() => setScannerOpen(false)}
+            />
+          </Suspense>
+        </ScannerErrorBoundary>
       )}
 
       {/* Sort controls — show when there are results */}

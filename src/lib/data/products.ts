@@ -157,7 +157,7 @@ export async function getRelatedProducts(
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
      JOIN store_products sp ON pm.store_product_id = sp.id
-     WHERE sp.category_raw LIKE $1
+     WHERE sp.category_raw ILIKE $1
        AND p.id != $2
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      HAVING COUNT(DISTINCT sp.store_id) >= 2
@@ -190,6 +190,34 @@ export async function getProductSlugs(): Promise<string[]> {
   return rows.map((r: Record<string, unknown>) => productToSlug(String(r.canonical_name), Number(r.id)));
 }
 
+// ── Chart helpers ─────────────────────────────────────────────────────
+
+export interface ChartPoint {
+  date: string;
+  [storeId: string]: number | string | null;
+}
+
+export function transformHistoryForChart(
+  history: PriceHistoryRow[]
+): { data: ChartPoint[]; storeIds: string[] } {
+  const storeIds = [...new Set(history.map((h) => h.store_id))];
+  const byDate = new Map<string, Record<string, number | null>>();
+
+  for (const h of history) {
+    const date = h.recorded_at.slice(0, 10); // YYYY-MM-DD
+    if (!byDate.has(date)) byDate.set(date, {});
+    const row = byDate.get(date)!;
+    const price = h.sale_price ?? h.price;
+    row[h.store_id] = price;
+  }
+
+  const data: ChartPoint[] = [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, prices]) => ({ date, ...prices }));
+
+  return { data, storeIds };
+}
+
 // ── Products index / listing ───────────────────────────────────────────
 
 export async function getTopCategories(): Promise<string[]> {
@@ -205,7 +233,7 @@ export async function getTopCategories(): Promise<string[]> {
          END
        )) as category
      FROM store_products
-     WHERE category_raw IS NOT NULL AND category_raw LIKE 'Shop / %'
+     WHERE category_raw IS NOT NULL AND category_raw ILIKE 'Shop / %'
      ORDER BY category`
   );
 

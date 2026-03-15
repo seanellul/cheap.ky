@@ -14,6 +14,45 @@ export const metadata: Metadata = {
   },
 };
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  dairy: "\uD83E\uDDC0",
+  produce: "\uD83E\uDD6C",
+  bakery: "\uD83C\uDF5E",
+  beverages: "\uD83E\uDD64",
+  meat: "\uD83E\uDD69",
+  frozen: "\uD83E\uDDCA",
+  snacks: "\uD83C\uDF7F",
+  household: "\uD83E\uDDF9",
+  pantry: "\uD83E\uDD6B",
+  deli: "\uD83E\uDD6A",
+  coffee: "\u2615",
+  condiments: "\uD83E\uDED9",
+  seafood: "\uD83E\uDD90",
+  baby: "\uD83C\uDF7C",
+  pets: "\uD83D\uDC3E",
+  health: "\uD83D\uDC8A",
+  cereal: "\uD83E\uDD63",
+  pasta: "\uD83C\uDF5D",
+  candy: "\uD83C\uDF6C",
+  beer: "\uD83C\uDF7A",
+  wine: "\uD83C\uDF77",
+  water: "\uD83D\uDCA7",
+  juice: "\uD83E\uDDC3",
+  cheese: "\uD83E\uDDC0",
+  bread: "\uD83E\uDD56",
+  canned: "\uD83E\uDD6B",
+  cleaning: "\uD83E\uDDF4",
+  paper: "\uD83E\uDDFB",
+};
+
+function getCategoryEmoji(name: string): string {
+  const lower = name.toLowerCase();
+  for (const [key, emoji] of Object.entries(CATEGORY_EMOJI)) {
+    if (lower.includes(key)) return emoji;
+  }
+  return "\uD83D\uDED2";
+}
+
 export default async function CategoriesPage() {
   const categories = await getCategories();
 
@@ -51,6 +90,7 @@ export default async function CategoriesPage() {
               className="border rounded-xl p-4 bg-card hover:bg-muted/50 hover:border-primary/30 transition-colors group"
             >
               <div className="font-semibold group-hover:text-primary transition-colors">
+                <span className="mr-1.5">{getCategoryEmoji(cat.name)}</span>
                 {cat.name}
               </div>
               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">

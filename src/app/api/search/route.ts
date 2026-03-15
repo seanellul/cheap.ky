@@ -3,10 +3,25 @@ import { rawSql } from "@/lib/db";
 import { getPriceChanges } from "@/lib/db/price-changes";
 import { normalizeUpc } from "@/lib/utils/upc";
 import { formatUnitPrice } from "@/lib/utils/unit-price";
+import { toSlug } from "@/lib/utils/slug";
 
 function looksLikeBarcode(q: string): boolean {
   const digits = q.replace(/\D/g, "");
   return digits.length >= 8 && digits.length <= 14 && digits === q.trim();
+}
+
+function simplifyCategory(raw: string): string {
+  const parts = raw.split(" / ");
+  return parts.length > 2 ? parts.slice(2).join(" / ") : parts[parts.length - 1];
+}
+
+async function resolveCategoryRaws(slug: string): Promise<string[]> {
+  const allCats = await rawSql(
+    `SELECT DISTINCT category_raw FROM store_products WHERE category_raw IS NOT NULL`
+  );
+  return allCats
+    .filter((c) => toSlug(simplifyCategory(String(c.category_raw))) === slug)
+    .map((c) => String(c.category_raw));
 }
 
 export async function GET(req: NextRequest) {
@@ -14,8 +29,17 @@ export async function GET(req: NextRequest) {
   const sort = req.nextUrl.searchParams.get("sort") || "relevance";
   const typeFilter = req.nextUrl.searchParams.get("type") || "";
   const storeFilter = req.nextUrl.searchParams.get("store") || "";
+  const category = req.nextUrl.searchParams.get("category") || "";
 
-  if (q.length < 2) {
+  let categoryRaws: string[] = [];
+  if (category) {
+    categoryRaws = await resolveCategoryRaws(category);
+    if (categoryRaws.length === 0) {
+      return NextResponse.json({ results: [] });
+    }
+  }
+
+  if (q.length < 2 && !category) {
     return NextResponse.json({ results: [] });
   }
 
@@ -119,17 +143,35 @@ export async function GET(req: NextRequest) {
 
   const searchTerm = `%${q}%`;
 
-  // Single efficient query: get matched products with all store prices
+  // Build dynamic filters
   const matchedParams: (string | number)[] = [searchTerm, sort];
-  const matchedTypeCondition = typeFilter
-    ? `AND sp.category_raw ILIKE $${matchedParams.length + 1}`
-    : "";
-  if (typeFilter) matchedParams.push(`%${typeFilter}%`);
+
+  // Category filter
+  let catClause = "";
+  if (categoryRaws.length > 0) {
+    const placeholders = categoryRaws.map((_, i) => `$${matchedParams.length + i + 1}`).join(",");
+    catClause = `AND sp.category_raw IN (${placeholders})`;
+    matchedParams.push(...categoryRaws);
+  }
+
+  // Type filter
+  let matchedTypeCondition = "";
+  if (typeFilter) {
+    matchedParams.push(`%${typeFilter}%`);
+    matchedTypeCondition = `AND sp.category_raw ILIKE $${matchedParams.length}`;
+  }
+
+  // Store filter
   let matchedStoreCondition = "";
   if (storeFilter) {
     matchedParams.push(storeFilter);
     matchedStoreCondition = ` AND sp.store_id = $${matchedParams.length}`;
   }
+
+  // Search clause (optional when browsing by category)
+  const searchClauseMatched = q.length >= 2
+    ? `AND (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)`
+    : "";
 
   const matched = await rawSql(
     `SELECT
@@ -156,8 +198,9 @@ export async function GET(req: NextRequest) {
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
      JOIN store_products sp ON pm.store_product_id = sp.id
-     WHERE (p.canonical_name ILIKE $1 OR p.brand ILIKE $1)
-       AND sp.price IS NOT NULL
+     WHERE sp.price IS NOT NULL
+       ${searchClauseMatched}
+       ${catClause}
        ${matchedTypeCondition}${matchedStoreCondition}
      GROUP BY p.id, p.canonical_name, p.brand, p.size, p.image_url
      ORDER BY
@@ -171,17 +214,27 @@ export async function GET(req: NextRequest) {
     matchedParams
   );
 
-  // Also find unmatched store products (single-store items)
+  // Build unmatched query filters
   const unmatchedParams: (string | number)[] = [searchTerm, sort];
-  const unmatchedTypeCondition = typeFilter
-    ? `AND sp.category_raw ILIKE $${unmatchedParams.length + 1}`
-    : "";
-  if (typeFilter) unmatchedParams.push(`%${typeFilter}%`);
+  let unmatchedCatClause = "";
+  if (categoryRaws.length > 0) {
+    const placeholders = categoryRaws.map((_, i) => `$${unmatchedParams.length + i + 1}`).join(",");
+    unmatchedCatClause = `AND sp.category_raw IN (${placeholders})`;
+    unmatchedParams.push(...categoryRaws);
+  }
+  let unmatchedTypeCondition = "";
+  if (typeFilter) {
+    unmatchedParams.push(`%${typeFilter}%`);
+    unmatchedTypeCondition = `AND sp.category_raw ILIKE $${unmatchedParams.length}`;
+  }
   let unmatchedStoreCondition = "";
   if (storeFilter) {
     unmatchedParams.push(storeFilter);
     unmatchedStoreCondition = ` AND sp.store_id = $${unmatchedParams.length}`;
   }
+  const searchClauseUnmatched = q.length >= 2
+    ? `AND (sp.name ILIKE $1 OR sp.brand ILIKE $1)`
+    : "";
 
   const unmatched = await rawSql(
     `SELECT
@@ -199,8 +252,9 @@ export async function GET(req: NextRequest) {
        sp.unit_type,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
-     WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
-       AND sp.price IS NOT NULL
+     WHERE sp.price IS NOT NULL
+       ${searchClauseUnmatched}
+       ${unmatchedCatClause}
        ${unmatchedTypeCondition}${unmatchedStoreCondition}
        AND NOT EXISTS (
          SELECT 1 FROM product_matches pm WHERE pm.store_product_id = sp.id
@@ -219,7 +273,6 @@ export async function GET(req: NextRequest) {
   // Track spId -> storeId mapping per result index
   const resultSpIds: Array<Record<string, number>> = [];
 
-  // Process matched products
   for (const row of matched) {
     const storePricesArr = row.store_prices as Array<{
       sp_id: number;
@@ -279,7 +332,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Process unmatched store products
   for (const sp of unmatched) {
     const spId = Number(sp.id);
     const storeId = String(sp.store_id);

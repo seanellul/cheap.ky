@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
-import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Store, Clock, Tag } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Store, Clock, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { addSearchEntry, getSearchHistory } from "@/lib/history";
 import { ScannerErrorBoundary } from "@/components/scanner-error-boundary";
@@ -20,6 +20,11 @@ interface SearchResult {
   minPrice: number | null;
   storeCount: number;
   prices: Record<string, { price: number | null; salePrice: number | null; name: string }>;
+}
+
+interface CategoryOption {
+  name: string;
+  slug: string;
 }
 
 type SortOption = "relevance" | "price_asc" | "price_desc" | "stores";
@@ -170,6 +175,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [store, setStore] = useState("");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -193,10 +200,17 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     setIsMobile(window.innerWidth < 768 && /Mobi|Android/i.test(navigator.userAgent));
   }, []);
 
-  function doSearch(q: string, s: SortOption, type: string | null, storeId: string) {
+  useEffect(() => {
+    fetch("/api/search/categories")
+      .then((r) => r.json())
+      .then((data: CategoryOption[]) => setCategories(data))
+      .catch(() => {});
+  }, []);
+
+  function doSearch(q: string, s: SortOption, type: string | null, storeId: string, cat: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (q.length < 2) {
+    if (q.length < 2 && !cat) {
       onResults([]);
       setTypes([]);
       setLoading(false);
@@ -210,10 +224,12 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
 
     debounceRef.current = setTimeout(async () => {
       try {
-        let url = `/api/search?q=${encodeURIComponent(q)}&sort=${s}`;
-        if (type) url += `&type=${encodeURIComponent(type)}`;
-        if (storeId) url += `&store=${encodeURIComponent(storeId)}`;
-        const res = await fetch(url);
+        const params = new URLSearchParams({ sort: s });
+        if (q.length >= 2) params.set("q", q);
+        if (type) params.set("type", type);
+        if (storeId) params.set("store", storeId);
+        if (cat) params.set("category", cat);
+        const res = await fetch(`/api/search?${params}`);
         const data = await res.json();
         const results = data.results || [];
         onResults(results);
@@ -232,11 +248,11 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
   }
 
   useEffect(() => {
-    doSearch(query, sort, activeType, store);
+    doSearch(query, sort, activeType, store, category);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, sort, activeType, store]);
+  }, [query, sort, activeType, store, category]);
 
   // Autocomplete fetching
   const fetchAutocomplete = useCallback((q: string) => {
@@ -349,6 +365,10 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     }
   }
 
+  function handleCategorySelect(slug: string) {
+    setCategory(category === slug ? "" : slug);
+  }
+
   // Exposed for suggestion clicks
   function setSearchQuery(q: string) {
     setQuery(q);
@@ -367,6 +387,8 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     (window as any).__setSearchQuery = setSearchQuery;
     return () => { delete (window as any).__setSearchQuery; };
   }, []);
+
+  const isSearchActive = query.length >= 2 || !!category;
 
   return (
     <div className="space-y-2">
@@ -437,8 +459,33 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
         </ScannerErrorBoundary>
       )}
 
-      {/* Sort controls — show when there are results */}
-      {query.length >= 2 && (
+      {/* Category filter pills */}
+      {categories.length > 0 && isSearchActive && (
+        <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
+          <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
+            {categories.map((cat) => (
+              <button
+                key={cat.slug}
+                onClick={() => handleCategorySelect(cat.slug)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-200 active:scale-95 whitespace-nowrap ${
+                  category === cat.slug
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {cat.name}
+                {category === cat.slug && (
+                  <X className="inline-block h-3 w-3 ml-1 -mr-0.5" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sort controls */}
+      {isSearchActive && (
         <div className="flex items-center gap-2 px-0.5 animate-slide-up-fade">
           <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <div className="flex gap-1 flex-wrap">

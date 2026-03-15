@@ -16,6 +16,7 @@ import {
   BookOpen,
   Compass,
   Activity,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
@@ -27,6 +28,7 @@ const MENU_SECTIONS = [
     label: "Shop",
     items: [
       { href: "/", icon: Search, label: "Search" },
+      { href: "/category", icon: LayoutGrid, label: "Browse Categories" },
       { href: "/compare", icon: ArrowLeftRight, label: "Compare Prices" },
       { href: "/staples", icon: ListChecks, label: "Everyday Staples" },
       { href: "/favourites", icon: Heart, label: "Favourites" },

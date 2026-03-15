@@ -12,6 +12,7 @@ import {
   Package,
   ChevronRight,
   BookOpen,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/search-bar";
@@ -50,6 +51,14 @@ interface SiteStats {
 }
 
 const FEATURES = [
+  {
+    href: "/category",
+    icon: LayoutGrid,
+    title: "Browse Categories",
+    description: "Browse by aisle — dairy, produce, frozen, snacks, and more",
+    color: "text-store-costuless",
+    bg: "bg-store-costuless/10",
+  },
   {
     href: "/compare",
     icon: ArrowLeftRight,
@@ -171,7 +180,7 @@ function HomePageContent() {
     (window as any).__setSearchQuery?.(term);
   }
 
-  const isSearchActive = loading || (hasSearched && query.length >= 2);
+  const isSearchActive = loading || (hasSearched && (query.length >= 2 || results.length > 0));
   const showLanding = !isSearchActive;
   const showBubbles = searchFocused && !loading && query.length < 2 && results.length === 0;
 

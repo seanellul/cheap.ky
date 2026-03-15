@@ -120,7 +120,7 @@ export async function getPriceDrops(sinceDays = 7, limit = 20): Promise<PriceDro
         COALESCE(ph.sale_price, ph.price) AS current_price,
         ph.recorded_at
       FROM price_history ph
-      WHERE ph.recorded_at >= NOW() - INTERVAL '1 day'
+      WHERE ph.recorded_at >= NOW() - INTERVAL '3 days'
         AND ph.price IS NOT NULL
     ),
     previous AS (
@@ -128,7 +128,7 @@ export async function getPriceDrops(sinceDays = 7, limit = 20): Promise<PriceDro
         ph.store_product_id,
         COALESCE(ph.sale_price, ph.price) AS old_price
       FROM price_history ph
-      WHERE ph.recorded_at < NOW() - INTERVAL '1 day'
+      WHERE ph.recorded_at < NOW() - INTERVAL '3 days'
         AND ph.recorded_at >= NOW() - MAKE_INTERVAL(days => ${sinceDays})
         AND ph.price IS NOT NULL
       ORDER BY ph.store_product_id, ph.recorded_at DESC

@@ -250,3 +250,14 @@ export const productRatings = pgTable(
     ),
   ]
 );
+
+// Email subscribers for weekly price drop digest
+export const emailSubscribers = pgTable("email_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  unsubscribeToken: text("unsubscribe_token").notNull(),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});

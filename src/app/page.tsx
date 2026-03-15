@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeftRight,
   ListChecks,
@@ -16,7 +17,7 @@ import {
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SearchBar } from "@/components/search-bar";
+import { SearchBar, type SearchBarHandle } from "@/components/search-bar";
 import { SearchBubbles } from "@/components/search-bubbles";
 import { RecentSearches } from "@/components/recent-searches";
 import { ProductCard } from "@/components/product-card";
@@ -31,8 +32,10 @@ import { MissingProductButton } from "@/components/missing-product-button";
 import { ProductImage } from "@/components/product-image";
 import { SaleBadge } from "@/components/sale-badge";
 import { StoreBadge } from "@/components/store-badge";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { formatKYD } from "@/lib/utils/currency";
 import { useCart } from "@/lib/contexts/cart-context";
+import { useCountUp } from "@/lib/hooks/use-count-up";
 import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
 
@@ -159,14 +162,15 @@ function HomePageContent() {
   const [specials, setSpecials] = useState<SpecialItem[]>([]);
   const { refreshCart } = useCart();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const searchBarRef = useRef<SearchBarHandle>(null);
 
   // Read ?q= param (e.g. from history page links) and trigger search
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) {
-      // Wait for SearchBar to mount and expose __setSearchQuery
       const timer = setTimeout(() => {
-        (window as any).__setSearchQuery?.(q);
+        searchBarRef.current?.setQuery(q);
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -199,7 +203,7 @@ function HomePageContent() {
     if (item) trackAddToCart(item.name, "search", item.minPrice ?? 0);
     toast.success("Added to cart", {
       description: item?.name ?? "Item added",
-      action: { label: "View Cart", onClick: () => window.location.href = "/cart" },
+      action: { label: "View Cart", onClick: () => router.push("/cart") },
     });
   }
 
@@ -219,7 +223,7 @@ function HomePageContent() {
   }
 
   function handleBubbleSelect(term: string) {
-    (window as any).__setSearchQuery?.(term);
+    searchBarRef.current?.setQuery(term);
   }
 
   const isSearchActive = loading || (hasSearched && (query.length >= 2 || results.length > 0));
@@ -229,8 +233,9 @@ function HomePageContent() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-4 py-3.5 sm:px-8 sm:py-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,var(--color-accent)/0.06,transparent_60%)]" />
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/8 via-primary/14 to-accent/8 px-4 py-4 sm:px-10 sm:py-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,var(--color-accent)/0.1,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_1px_at_16px_16px,var(--color-primary)/0.06_1px,transparent_0)] [background-size:32px_32px]" />
         <div className="relative max-w-2xl">
           <h1 className="text-base sm:text-xl font-bold tracking-tight text-foreground leading-snug">
             {stats ? (
@@ -248,6 +253,7 @@ function HomePageContent() {
 
       {/* ── Search ── */}
       <SearchBar
+        ref={searchBarRef}
         onResults={handleResults}
         onLoadingChange={setLoading}
         onQueryChange={setQuery}
@@ -351,58 +357,52 @@ function HomePageContent() {
         <>
           {/* Stats bar */}
           {stats && (
+            <ScrollReveal>
             <section className="grid grid-cols-3 gap-3 stagger-children">
-              {[
-                { icon: Package, value: formatCount(stats.products), label: "Products tracked" },
-                { icon: Store, value: String(stats.stores), label: "Stores compared" },
-                { icon: TrendingDown, value: formatCount(stats.matches), label: "Price matches" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-xl border bg-card p-3.5 sm:p-4 text-center"
-                >
-                  <stat.icon className="h-5 w-5 mx-auto mb-1.5 text-primary/60" />
-                  <div className="text-xl sm:text-2xl font-bold tabular-nums text-foreground">
-                    {stat.value}
-                  </div>
-                  <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
+              <StatCard icon={Package} target={stats.products} label="Products tracked" />
+              <StatCard icon={Store} target={stats.stores} label="Stores compared" />
+              <StatCard icon={TrendingDown} target={stats.matches} label="Price matches" />
             </section>
+            </ScrollReveal>
           )}
 
           {/* Specials this week */}
           {specials.length > 0 && (
+            <ScrollReveal>
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold sm:text-xl">This week&apos;s deals</h2>
-                <a
+                <Link
                   href="/specials"
                   className="text-xs text-primary font-medium flex items-center gap-0.5 hover:underline"
                 >
                   View all <ChevronRight className="h-3 w-3" />
-                </a>
+                </Link>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
+              <div className="scroll-mask">
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
                 {specials.map((item) => {
                   const savings =
                     item.price != null && item.salePrice != null
                       ? item.price - item.salePrice
                       : 0;
+                  const storeColor = item.storeId ? `var(--store-${item.storeId})` : undefined;
                   return (
                     <div
                       key={item.storeProductId}
-                      className="shrink-0 w-[260px] snap-start rounded-xl border bg-card p-3 flex items-start gap-3"
+                      className="shrink-0 w-[280px] snap-start rounded-xl border bg-card p-3 flex items-start gap-3 relative overflow-hidden shadow-sm"
                     >
+                      {storeColor && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: storeColor }} />
+                      )}
                       <ProductImage src={item.imageUrl} alt={item.name} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-1">
-                          <div className="font-semibold text-sm leading-snug line-clamp-2 flex-1">
-                            {item.name}
-                          </div>
+                          {item.storeId && <StoreBadge storeId={item.storeId} size="sm" />}
                           <SaleBadge className="shrink-0 mt-0.5" />
+                        </div>
+                        <div className="font-semibold text-sm leading-snug line-clamp-2 mt-1">
+                          {item.name}
                         </div>
                         <div className="flex items-baseline gap-2 mt-1">
                           {item.salePrice != null && (
@@ -417,7 +417,7 @@ function HomePageContent() {
                           )}
                         </div>
                         {savings > 0.01 && (
-                          <span className="inline-block mt-1 text-[10px] font-semibold text-savings bg-savings/10 rounded-full px-1.5 py-0.5">
+                          <span className="inline-block mt-1 text-xs font-semibold text-savings bg-savings/10 rounded-full px-1.5 py-0.5">
                             Save {formatKYD(savings)}
                           </span>
                         )}
@@ -426,10 +426,13 @@ function HomePageContent() {
                   );
                 })}
               </div>
+              </div>
             </section>
+            </ScrollReveal>
           )}
 
           {/* How it works */}
+          <ScrollReveal>
           <section className="space-y-3">
             <h2 className="text-lg font-bold sm:text-xl">How it works</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 stagger-children">
@@ -467,13 +470,15 @@ function HomePageContent() {
               ))}
             </div>
           </section>
+          </ScrollReveal>
 
           {/* Feature links */}
+          <ScrollReveal>
           <section className="space-y-3">
             <h2 className="text-lg font-bold sm:text-xl">Explore</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children">
               {FEATURES.map((feature) => (
-                <a
+                <Link
                   key={feature.href}
                   href={feature.href}
                   className="group rounded-xl border bg-card p-4 sm:p-5 flex gap-3.5 items-start hover:border-primary/30 hover:shadow-sm transition-all active:scale-[0.98]"
@@ -492,13 +497,15 @@ function HomePageContent() {
                       {feature.description}
                     </p>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </section>
+          </ScrollReveal>
 
           {/* Mission */}
-          <section className="rounded-2xl border bg-gradient-to-br from-card to-muted/30 p-5 sm:p-8 space-y-3">
+          <ScrollReveal>
+          <section className="rounded-2xl border bg-gradient-to-br from-card to-muted/30 p-5 sm:p-8 space-y-3 shadow-md ring-1 ring-border/50">
             <h2 className="text-lg font-bold sm:text-xl">Why Cheap.ky?</h2>
             <div className="space-y-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
               <p>
@@ -521,6 +528,7 @@ function HomePageContent() {
               </p>
             </div>
           </section>
+          </ScrollReveal>
         </>
       )}
 
@@ -529,6 +537,21 @@ function HomePageContent() {
         onClose={() => setSelectedProductId(null)}
         onAddToCart={handleAddToCart}
       />
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, target, label }: { icon: typeof Package; target: number; label: string }) {
+  const value = useCountUp(target);
+  return (
+    <div className="rounded-xl border bg-card p-3.5 sm:p-4 text-center shadow-sm">
+      <Icon className="h-5 w-5 mx-auto mb-1.5 text-primary/60" />
+      <div className="text-xl sm:text-2xl font-bold tabular-nums text-foreground">
+        {formatCount(value)}
+      </div>
+      <div className="text-xs text-muted-foreground mt-0.5">
+        {label}
+      </div>
     </div>
   );
 }

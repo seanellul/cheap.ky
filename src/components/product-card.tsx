@@ -63,15 +63,19 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, priceChan
 
   return (
     <div
-      className="group relative flex items-start gap-3 rounded-2xl border bg-card p-3 transition-all duration-200 active:scale-[0.98]"
+      className="group relative flex items-start gap-3 rounded-2xl border bg-card p-3 transition-all duration-200 active:scale-[0.98] cursor-pointer hover:shadow-sm hover:-translate-y-0.5"
       style={style}
+      role="button"
+      tabIndex={0}
+      aria-label={name}
       onClick={() => id > 0 && onClickProduct?.(id)}
+      onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && id > 0) { e.preventDefault(); onClickProduct?.(id); } }}
     >
       {/* Product image */}
       <div className="shrink-0 relative">
         <ProductImage src={imageUrl} alt={name} size="lg" />
         {savings > 0.01 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-savings text-white text-[9px] font-bold px-1.5 py-0.5 leading-none shadow-sm">
+          <span className="absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-savings text-white text-[10px] font-bold px-1.5 py-0.5 leading-none shadow-sm">
             −{formatKYD(savings)}
           </span>
         )}

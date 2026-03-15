@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ export function NavLink({ href, children }: NavLinkProps) {
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <a
+    <Link
       href={href}
       className={cn(
         "px-3 py-1.5 rounded-lg transition-colors",
@@ -23,6 +24,6 @@ export function NavLink({ href, children }: NavLinkProps) {
       )}
     >
       {children}
-    </a>
+    </Link>
   );
 }

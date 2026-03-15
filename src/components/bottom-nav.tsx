@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, ArrowLeftRight, ListChecks, Heart, LayoutGrid } from "lucide-react";
+import { Search, ShoppingCart, ArrowLeftRight, Heart, LayoutGrid } from "lucide-react";
 import { useCart } from "@/lib/contexts/cart-context";
 import { useFavourites } from "@/lib/contexts/favourites-context";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,6 @@ const NAV_ITEMS = [
   { href: "/category", icon: LayoutGrid, label: "Browse" },
   { href: "/compare", icon: ArrowLeftRight, label: "Compare" },
   { href: "/favourites", icon: Heart, label: "Favourites", showFavBadge: true },
-  { href: "/staples", icon: ListChecks, label: "Staples" },
   { href: "/cart", icon: ShoppingCart, label: "Cart", showBadge: true },
 ];
 
@@ -28,7 +28,7 @@ export function BottomNav() {
           {NAV_ITEMS.map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
@@ -38,7 +38,7 @@ export function BottomNav() {
               >
                 {/* Active indicator pill */}
                 {isActive && (
-                  <span className="absolute top-1.5 left-1/2 -translate-x-1/2 h-[3px] w-5 rounded-full bg-primary animate-scale-bounce" />
+                  <span className="absolute top-1.5 left-1/2 -translate-x-1/2 h-[3px] w-5 rounded-full bg-primary animate-scale-bounce ease-spring" />
                 )}
                 <span className="relative">
                   <item.icon
@@ -67,13 +67,13 @@ export function BottomNav() {
                 </span>
                 <span
                   className={cn(
-                    "text-[10px] transition-all duration-200",
+                    "text-[11px] transition-all duration-200",
                     isActive ? "font-semibold" : "font-medium"
                   )}
                 >
                   {item.label}
                 </span>
-              </a>
+              </Link>
             );
           })}
         </div>

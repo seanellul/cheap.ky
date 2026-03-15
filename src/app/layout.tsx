@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { PostHogProvider } from "@/lib/contexts/posthog-provider";
 import { PostHogPageView } from "@/lib/contexts/posthog-provider";
 import { Suspense } from "react";
+import Link from "next/link";
 import { BottomNav } from "@/components/bottom-nav";
 import { AppBanner } from "@/components/app-banner";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -154,6 +155,9 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${plusJakarta.variable} antialiased`}
       >
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg">
+          Skip to content
+        </a>
         <PostHogProvider>
         <Suspense fallback={null}><PostHogPageView /></Suspense>
         <ThemeProvider>
@@ -161,9 +165,9 @@ export default function RootLayout({
         <FavouritesProvider>
           <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-xl backdrop-saturate-150">
             <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-2.5 md:py-3">
-              <a href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
+              <Link href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
                 <BrandLogo showIcon />
-              </a>
+              </Link>
               {/* Mobile header actions */}
               <div className="flex items-center gap-1 md:hidden">
                 <MobileMenu />
@@ -184,7 +188,7 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:py-6 md:pb-6">
+          <main id="main-content" className="mx-auto max-w-6xl px-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:py-6 md:pb-6">
             {children}
           </main>
           <AppBanner />

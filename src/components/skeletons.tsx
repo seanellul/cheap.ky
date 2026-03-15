@@ -25,6 +25,27 @@ export function SearchResultSkeleton() {
   );
 }
 
+export function ReportSkeleton() {
+  return (
+    <div className="space-y-4 stagger-children">
+      <Bone className="h-8 w-2/5 rounded-lg" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Bone className="h-4 w-20 rounded" />
+            <Bone className="h-7 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Bone key={i} className="h-10 w-full rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function CartItemSkeleton() {
   return (
     <div className="space-y-2 stagger-children">

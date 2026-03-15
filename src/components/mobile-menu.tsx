@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -122,7 +123,7 @@ export function MobileMenu() {
                   {section.items.map((item) => {
                     const active = isActive(item.href);
                     return (
-                      <a
+                      <Link
                         key={item.href}
                         href={item.href}
                         onClick={() => setOpen(false)}
@@ -135,7 +136,7 @@ export function MobileMenu() {
                       >
                         <item.icon className={cn("h-4.5 w-4.5", active ? "text-primary" : "text-muted-foreground")} />
                         {item.label}
-                      </a>
+                      </Link>
                     );
                   })}
                 </div>

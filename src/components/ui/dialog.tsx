@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useSwipeToDismiss } from "@/lib/hooks/use-swipe-to-dismiss"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -47,10 +48,33 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+  const popupRef = React.useRef<HTMLDivElement>(null)
+  const [open, setOpen] = React.useState(false)
+
+  // Track open state from data attribute
+  React.useEffect(() => {
+    const el = popupRef.current
+    if (!el) return
+    const obs = new MutationObserver(() => {
+      setOpen(el.hasAttribute("data-open"))
+    })
+    obs.observe(el, { attributes: true, attributeFilter: ["data-open"] })
+    setOpen(el.hasAttribute("data-open"))
+    return () => obs.disconnect()
+  }, [])
+
+  const { onTouchStart, onTouchMove, onTouchEnd } = useSwipeToDismiss(popupRef, {
+    onDismiss: () => {
+      // Find and click the close button to properly close via base-ui
+      popupRef.current?.querySelector<HTMLButtonElement>("[data-slot='dialog-close']")?.click()
+    },
+  })
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
+        ref={popupRef}
         data-slot="dialog-content"
         className={cn(
           // Desktop: centered modal
@@ -65,10 +89,13 @@ function DialogContent({
           "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:zoom-out-95",
           className
         )}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         {...props}
       >
         {/* Mobile drag handle */}
-        <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 -mt-1 mb-1 sm:hidden" />
+        <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 -mt-1 mb-1 sm:hidden cursor-grab" />
         <div className="overflow-y-auto max-h-[calc(90vh-4rem)] sm:max-h-none overscroll-contain">
           {children}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef, lazy, Suspense } from "react";
 import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Store, Clock, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { addSearchEntry, getSearchHistory } from "@/lib/history";
@@ -28,6 +28,10 @@ interface CategoryOption {
 }
 
 type SortOption = "relevance" | "price_asc" | "price_desc" | "stores";
+
+export interface SearchBarHandle {
+  setQuery: (q: string) => void;
+}
 
 interface SearchBarProps {
   onResults: (results: SearchResult[]) => void;
@@ -171,7 +175,7 @@ const STORE_OPTIONS: { value: string; label: string }[] = [
   })),
 ];
 
-export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange, onSuggestions }: SearchBarProps) {
+export const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusChange, onSuggestions }, ref) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [store, setStore] = useState("");
@@ -382,11 +386,9 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
     onQueryChange?.(barcode);
   }
 
-  // Expose setSearchQuery via ref-like pattern on window for suggestions
-  useEffect(() => {
-    (window as any).__setSearchQuery = setSearchQuery;
-    return () => { delete (window as any).__setSearchQuery; };
-  }, []);
+  useImperativeHandle(ref, () => ({
+    setQuery: setSearchQuery,
+  }));
 
   const isSearchActive = query.length >= 2 || !!category;
 
@@ -573,4 +575,4 @@ export function SearchBar({ onResults, onLoadingChange, onQueryChange, onFocusCh
       )}
     </div>
   );
-}
+});

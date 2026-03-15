@@ -5,15 +5,7 @@
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/ingest/cron",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/generate-articles",
-      "schedule": "0 8 * * 1"
-    },
-    {
-      "path": "/api/digest",
+      "path": "/api/weekly",
       "schedule": "0 9 * * 5"
     }
   ]

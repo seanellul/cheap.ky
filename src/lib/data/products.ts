@@ -73,24 +73,29 @@ export interface ProductListItem {
 export async function getRatingsForProduct(
   productId: number
 ): Promise<Record<string, RatingCounts>> {
-  const rows = await rawSql(
-    `SELECT store_id,
-            SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as up,
-            SUM(CASE WHEN rating = -1 THEN 1 ELSE 0 END) as down
-     FROM product_ratings
-     WHERE product_id = $1
-     GROUP BY store_id`,
-    [productId]
-  );
+  try {
+    const rows = await rawSql(
+      `SELECT store_id,
+              SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as up,
+              SUM(CASE WHEN rating = -1 THEN 1 ELSE 0 END) as down
+       FROM product_ratings
+       WHERE product_id = $1
+       GROUP BY store_id`,
+      [productId]
+    );
 
-  const result: Record<string, RatingCounts> = {};
-  for (const r of rows) {
-    result[String(r.store_id)] = {
-      up: Number(r.up),
-      down: Number(r.down),
-    };
+    const result: Record<string, RatingCounts> = {};
+    for (const r of rows) {
+      result[String(r.store_id)] = {
+        up: Number(r.up),
+        down: Number(r.down),
+      };
+    }
+    return result;
+  } catch {
+    // Table may not exist yet — return empty ratings
+    return {};
   }
-  return result;
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductData | null> {

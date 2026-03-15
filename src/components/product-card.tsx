@@ -9,6 +9,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { StalenessBadge, getStalenessInfo } from "@/components/staleness-badge";
 import { FavouriteButton } from "@/components/favourite-button";
+import { SaleBadge } from "@/components/sale-badge";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -19,7 +20,7 @@ interface ProductCardProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null; unitPrice?: string | null; matchQuality?: string }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null; unitPrice?: string | null; matchQuality?: string; isPromo?: boolean }>;
   priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
@@ -107,6 +108,7 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, priceChan
                 {p?.updatedAt && getStalenessInfo(p.updatedAt).level !== "fresh" && (
                   <StalenessBadge updatedAt={p.updatedAt} />
                 )}
+                {p?.isPromo && <SaleBadge />}
               </div>
             );
           })}

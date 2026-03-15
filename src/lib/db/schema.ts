@@ -38,6 +38,8 @@ export const storeProducts = pgTable(
     unitSize: real("unit_size"),   // parsed numeric size (e.g. 500 for "500ml", 4260 for "12x355ml")
     unitType: text("unit_type"),   // canonical unit: g, ml, oz, fl_oz, ea
     rawData: text("raw_data"), // JSON blob
+    isPromo: boolean("is_promo").default(false),
+    promoEndsAt: timestamp("promo_ends_at"),
     createdAt: timestamp("created_at")
       .notNull()
       .defaultNow(),
@@ -92,6 +94,8 @@ export const priceHistory = pgTable("price_history", {
     .references(() => storeProducts.id),
   price: real("price"),
   salePrice: real("sale_price"),
+  isPromo: boolean("is_promo").default(false),
+  promoEndsAt: timestamp("promo_ends_at"),
   recordedAt: timestamp("recorded_at")
     .notNull()
     .defaultNow(),

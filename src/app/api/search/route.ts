@@ -193,7 +193,8 @@ export async function GET(req: NextRequest) {
          'unit_size', sp.unit_size,
          'unit_type', sp.unit_type,
          'confidence', pm.confidence,
-         'match_method', pm.match_method
+         'match_method', pm.match_method,
+         'is_promo', COALESCE(sp.is_promo, false)
        )) AS store_prices
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
@@ -250,6 +251,7 @@ export async function GET(req: NextRequest) {
        sp.category_raw,
        sp.unit_size,
        sp.unit_type,
+       COALESCE(sp.is_promo, false) AS is_promo,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
      WHERE sp.price IS NOT NULL
@@ -285,9 +287,10 @@ export async function GET(req: NextRequest) {
       unit_type: string | null;
       confidence: number | null;
       match_method: string | null;
+      is_promo: boolean;
     }>;
 
-    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null; unitPrice: string | null; matchQuality: string }> = {};
+    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null; unitPrice: string | null; matchQuality: string; isPromo: boolean }> = {};
     const storeSpIds: Record<string, number> = {};
     for (const sp of storePricesArr) {
       if (!prices[sp.store_id]) {
@@ -311,6 +314,7 @@ export async function GET(req: NextRequest) {
           updatedAt: sp.updated_at ?? null,
           unitPrice: unitPriceLabel,
           matchQuality,
+          isPromo: sp.is_promo ?? false,
         };
         allSpIds.push(sp.sp_id);
         storeSpIds[sp.store_id] = sp.sp_id;
@@ -360,6 +364,7 @@ export async function GET(req: NextRequest) {
           updatedAt: sp.updated_at ? String(sp.updated_at) : null,
           unitPrice: unitPriceLabel,
           matchQuality: "unmatched",
+          isPromo: sp.is_promo === true,
         },
       },
       priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,

@@ -96,14 +96,18 @@ export abstract class FreshopAdapter implements StoreAdapter {
 
           const coverImage = item.cover_image as string | undefined;
 
+          const unitPrice = (item.unit_price as number) ?? null;
+          const salePriceVal = (item.sale_price as number) ?? null;
+          const isPromo = salePriceVal != null && salePriceVal > 0 && unitPrice != null && unitPrice > 0 && salePriceVal < unitPrice;
+
           allProducts.push({
             sku: id,
             upc: (item.upc as string) || null,
             name: (item.name as string) || "",
             brand: null,
             description: null,
-            price: (item.unit_price as number) ?? null,
-            salePrice: (item.sale_price as number) ?? null,
+            price: unitPrice,
+            salePrice: salePriceVal,
             unit: null,
             size: (item.product_size as string) || (item.size as string) || null,
             categoryRaw: dept.path || dept.name,
@@ -111,6 +115,8 @@ export abstract class FreshopAdapter implements StoreAdapter {
             inStock: item.status === "available",
             sourceUrl: (item.canonical_url as string) || null,
             rawData: item as Record<string, unknown>,
+            isPromo,
+            promoEndsAt: null,
           });
         }
       } catch (e) {

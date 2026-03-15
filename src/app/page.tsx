@@ -13,6 +13,7 @@ import {
   ChevronRight,
   BookOpen,
   LayoutGrid,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/search-bar";
@@ -27,6 +28,10 @@ import { SearchResultSkeleton } from "@/components/skeletons";
 import { SearchNoResults } from "@/components/search-no-results";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
 import { MissingProductButton } from "@/components/missing-product-button";
+import { ProductImage } from "@/components/product-image";
+import { SaleBadge } from "@/components/sale-badge";
+import { StoreBadge } from "@/components/store-badge";
+import { formatKYD } from "@/lib/utils/currency";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
@@ -51,6 +56,24 @@ interface SiteStats {
   maxSavingsKyd: number;
 }
 
+interface SpecialItem {
+  storeProductId: number;
+  productId: number | null;
+  name: string;
+  brand: string | null;
+  size: string | null;
+  price: number | null;
+  salePrice: number | null;
+  imageUrl: string | null;
+  storeId?: string;
+}
+
+interface SpecialStoreGroup {
+  storeId: string;
+  storeName: string;
+  items: SpecialItem[];
+}
+
 const FEATURES = [
   {
     href: "/category",
@@ -59,6 +82,14 @@ const FEATURES = [
     description: "Browse by aisle — dairy, produce, frozen, snacks, and more",
     color: "text-store-costuless",
     bg: "bg-store-costuless/10",
+  },
+  {
+    href: "/specials",
+    icon: Tag,
+    title: "Weekly Specials",
+    description: "Sale prices and deals across Cayman stores, updated as prices change",
+    color: "text-savings",
+    bg: "bg-savings/10",
   },
   {
     href: "/compare",
@@ -73,8 +104,8 @@ const FEATURES = [
     icon: ListChecks,
     title: "Everyday Staples",
     description: "Pre-matched essentials — milk, eggs, bread, chicken — at a glance",
-    color: "text-savings",
-    bg: "bg-savings/10",
+    color: "text-store-fosters",
+    bg: "bg-store-fosters/10",
   },
   {
     href: "/report",
@@ -125,6 +156,7 @@ function HomePageContent() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [resultKey, setResultKey] = useState(0);
+  const [specials, setSpecials] = useState<SpecialItem[]>([]);
   const { refreshCart } = useCart();
   const searchParams = useSearchParams();
 
@@ -144,6 +176,15 @@ function HomePageContent() {
     fetch("/api/stats")
       .then((r) => r.json())
       .then(setStats)
+      .catch(() => {});
+    fetch("/api/specials")
+      .then((r) => r.json())
+      .then((data) => {
+        const allItems: SpecialItem[] = (data.stores || []).flatMap(
+          (s: SpecialStoreGroup) => s.items.map((item) => ({ ...item, storeId: s.storeId }))
+        );
+        setSpecials(allItems.slice(0, 6));
+      })
       .catch(() => {});
   }, []);
 
@@ -329,6 +370,62 @@ function HomePageContent() {
                   </div>
                 </div>
               ))}
+            </section>
+          )}
+
+          {/* Specials this week */}
+          {specials.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold sm:text-xl">This week&apos;s deals</h2>
+                <a
+                  href="/specials"
+                  className="text-xs text-primary font-medium flex items-center gap-0.5 hover:underline"
+                >
+                  View all <ChevronRight className="h-3 w-3" />
+                </a>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
+                {specials.map((item) => {
+                  const savings =
+                    item.price != null && item.salePrice != null
+                      ? item.price - item.salePrice
+                      : 0;
+                  return (
+                    <div
+                      key={item.storeProductId}
+                      className="shrink-0 w-[260px] snap-start rounded-xl border bg-card p-3 flex items-start gap-3"
+                    >
+                      <ProductImage src={item.imageUrl} alt={item.name} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-1">
+                          <div className="font-semibold text-sm leading-snug line-clamp-2 flex-1">
+                            {item.name}
+                          </div>
+                          <SaleBadge className="shrink-0 mt-0.5" />
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                          {item.salePrice != null && (
+                            <span className="font-bold text-savings text-sm">
+                              {formatKYD(item.salePrice)}
+                            </span>
+                          )}
+                          {item.price != null && item.salePrice != null && (
+                            <span className="text-xs line-through text-muted-foreground">
+                              {formatKYD(item.price)}
+                            </span>
+                          )}
+                        </div>
+                        {savings > 0.01 && (
+                          <span className="inline-block mt-1 text-[10px] font-semibold text-savings bg-savings/10 rounded-full px-1.5 py-0.5">
+                            Save {formatKYD(savings)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
 

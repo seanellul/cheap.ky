@@ -8,6 +8,7 @@ import { StoreBadge } from "@/components/store-badge";
 import { PriceDisplay } from "@/components/price-display";
 import { PriceChangeIndicator } from "@/components/price-change-indicator";
 import { StalenessBadge } from "@/components/staleness-badge";
+import { SaleBadge } from "@/components/sale-badge";
 import { formatKYD } from "@/lib/utils/currency";
 
 const STORE_IDS = ["fosters", "hurleys", "kirkmarket", "costuless", "pricedright", "shopright"] as const;
@@ -26,7 +27,7 @@ interface PriceComparisonRowProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null; isPromo?: boolean }>;
   priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
@@ -95,6 +96,7 @@ export function PriceComparisonRow({
                 <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
               )}
               {p && <StalenessBadge updatedAt={p.updatedAt} />}
+              {p?.isPromo && <SaleBadge className="mt-0.5" />}
             </div>
           </td>
         );

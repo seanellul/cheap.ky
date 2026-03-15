@@ -54,6 +54,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             inStock: product.inStock ?? true,
             sourceUrl: product.sourceUrl,
             rawData: product.rawData ? JSON.stringify(product.rawData) : existing[0].rawData,
+            isPromo: product.isPromo ?? false,
+            promoEndsAt: product.promoEndsAt ?? null,
             updatedAt: new Date(),
           })
           .where(eq(storeProducts.id, existing[0].id));
@@ -64,6 +66,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             storeProductId: existing[0].id,
             price: product.price,
             salePrice: product.salePrice,
+            isPromo: product.isPromo ?? false,
+            promoEndsAt: product.promoEndsAt ?? null,
           });
           priceRecords++;
         }
@@ -88,6 +92,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             inStock: product.inStock ?? true,
             sourceUrl: product.sourceUrl,
             rawData: product.rawData ? JSON.stringify(product.rawData) : null,
+            isPromo: product.isPromo ?? false,
+            promoEndsAt: product.promoEndsAt ?? null,
           })
           .returning();
 
@@ -96,6 +102,8 @@ export async function runIngestion(adapter: StoreAdapter) {
           storeProductId: inserted.id,
           price: product.price,
           salePrice: product.salePrice,
+          isPromo: product.isPromo ?? false,
+          promoEndsAt: product.promoEndsAt ?? null,
         });
         priceRecords++;
       }

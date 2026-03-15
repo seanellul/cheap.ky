@@ -26,6 +26,7 @@ import {
 import { SearchResultSkeleton } from "@/components/skeletons";
 import { SearchNoResults } from "@/components/search-no-results";
 import { ProductDetailDialog } from "@/components/product-detail-dialog";
+import { MissingProductButton } from "@/components/missing-product-button";
 import { useCart } from "@/lib/contexts/cart-context";
 import { trackSearch, trackAddToCart, trackProductView, trackBarcodeScan } from "@/lib/analytics";
 import { track } from "@/lib/utils/track";
@@ -281,18 +282,27 @@ function HomePageContent() {
               </tbody>
             </table>
           </div>
+
+          <div className="flex justify-center pt-1">
+            <MissingProductButton variant="inline" />
+          </div>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && hasSearched && query.length >= 2 && results.length === 0 && (
-        <SearchNoResults
-          query={query}
-          suggestions={suggestions}
-          onSelect={handleBubbleSelect}
-          onClickProduct={setSelectedProductId}
-          onAddToCart={handleAddToCart}
-        />
+        <div className="space-y-3">
+          <SearchNoResults
+            query={query}
+            suggestions={suggestions}
+            onSelect={handleBubbleSelect}
+            onClickProduct={setSelectedProductId}
+            onAddToCart={handleAddToCart}
+          />
+          <div className="flex justify-center">
+            <MissingProductButton />
+          </div>
+        </div>
       )}
 
       {/* ── Landing sections (hidden when actively searching) ── */}

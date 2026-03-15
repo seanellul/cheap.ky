@@ -68,6 +68,11 @@ export default function IngestPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Ingestion Dashboard</h1>
         <div className="flex gap-2">
+          <a href="/admin/requests">
+            <Button variant="outline" size="sm">
+              Product Requests
+            </Button>
+          </a>
           <a href="/admin/matches">
             <Button variant="outline" size="sm">
               Match Review

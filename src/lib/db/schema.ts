@@ -188,6 +188,15 @@ export const staples = pgTable("staples", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+// User-submitted product requests (wishlist for future scraping targets)
+export const productRequests = pgTable("product_requests", {
+  id: serial("id").primaryKey(),
+  productName: text("product_name").notNull(),
+  userAgent: text("user_agent"),
+  status: text("status").notNull().default("pending"), // pending, noted, added
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Links a staple to the best representative product at each store
 export const stapleProducts = pgTable(
   "staple_products",

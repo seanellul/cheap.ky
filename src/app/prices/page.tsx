@@ -7,6 +7,7 @@ import { formatKYD } from "@/lib/utils/currency";
 import { ChevronRight, ChevronLeft, Tag, Store, Search } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PriceSearchInput } from "./search-input";
+import { MissingProductButton } from "@/components/missing-product-button";
 
 export const metadata: Metadata = {
   title: "Compare Grocery Prices in Cayman Islands",
@@ -158,19 +159,24 @@ export default async function PricesIndexPage({ searchParams }: PageProps) {
           ))}
         </div>
       ) : (
-        <EmptyState
-          icon={Search}
-          title="No products found"
-          description={
-            search
-              ? `We couldn't find anything matching "${search}". Try a different term or browse by category.`
-              : category
-                ? `No products in ${category} right now. Check back soon or browse all products.`
-                : "No products found. Try a different search or category."
-          }
-          actionLabel="Browse all products"
-          actionHref="/prices"
-        />
+        <div className="space-y-3">
+          <EmptyState
+            icon={Search}
+            title="No products found"
+            description={
+              search
+                ? `We couldn't find anything matching "${search}". Try a different term or browse by category.`
+                : category
+                  ? `No products in ${category} right now. Check back soon or browse all products.`
+                  : "No products found. Try a different search or category."
+            }
+            actionLabel="Browse all products"
+            actionHref="/prices"
+          />
+          <div className="flex justify-center">
+            <MissingProductButton />
+          </div>
+        </div>
       )}
 
       {/* Pagination */}

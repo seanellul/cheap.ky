@@ -42,8 +42,10 @@ interface PageProps {
 
 // ── Metadata ──────────────────────────────────────────────────────────
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const data = await getCategoryBySlug(slug, 1, 1);
   if (!data) return { title: "Category Not Found" };
 
@@ -52,11 +54,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${data.name} Prices in Cayman Islands`,
     description: `Compare ${data.name} prices across ${storeCount} Cayman grocery stores. ${data.productCount} products compared. Find the cheapest ${data.name.toLowerCase()} today.`,
+    alternates: { canonical: `https://cheap.ky/category/${slug}${page > 1 ? `?page=${page}` : ""}` },
     openGraph: {
       title: `${data.name} Prices -- Cheap.ky`,
       description: `Compare ${data.name} prices across Cayman Islands stores.`,
     },
   };
+}
+
+// ── Static params ────────────────────────────────────────────────────
+
+export async function generateStaticParams() {
+  const categories = await getCategories();
+  return categories.map((c) => ({ slug: c.slug }));
 }
 
 // ── Page ──────────────────────────────────────────────────────────────
@@ -95,7 +105,45 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     return `/category/${slug}${qs ? `?${qs}` : ""}`;
   }
 
+  // JSON-LD structured data
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://cheap.ky" },
+      { "@type": "ListItem", position: 2, name: "Categories", item: "https://cheap.ky/category" },
+      { "@type": "ListItem", position: 3, name },
+    ],
+  };
+
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${name} Prices in Cayman Islands`,
+    url: `https://cheap.ky/category/${slug}`,
+    description: `Compare ${name} prices across Cayman Islands grocery stores. ${productCount} products compared.`,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: productCount,
+      itemListElement: products.slice(0, 10).map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://cheap.ky/prices/${p.slug}`,
+        name: p.name,
+      })),
+    },
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
     <div className="space-y-8">
       {/* Breadcrumb */}
       <nav
@@ -398,5 +446,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         </section>
       )}
     </div>
+    </>
   );
 }

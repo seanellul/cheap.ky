@@ -19,7 +19,7 @@ interface ProductCardProps {
   brand: string | null;
   size: string | null;
   imageUrl: string | null;
-  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null }>;
+  prices: Record<string, { price: number | null; salePrice: number | null; updatedAt?: string | null; unitPrice?: string | null; matchQuality?: string }>;
   priceChanges?: Record<string, { direction: "up" | "down"; amount: number }>;
   minPrice?: number | null;
   onAddToCart?: (productId: number) => void;
@@ -100,7 +100,7 @@ export function ProductCard({ id, name, brand, size, imageUrl, prices, priceChan
                 }`}
               >
                 <StoreBadge storeId={storeId} size="sm" />
-                <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} />
+                <PriceDisplay price={p?.price} salePrice={p?.salePrice} isCheapest={isCheapest} unitPrice={p?.unitPrice} matchQuality={p?.matchQuality} />
                 {priceChanges?.[storeId] && (
                   <PriceChangeIndicator direction={priceChanges[storeId].direction} amount={priceChanges[storeId].amount} />
                 )}

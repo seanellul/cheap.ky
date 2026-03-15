@@ -35,6 +35,8 @@ export const storeProducts = pgTable(
     imageUrl: text("image_url"),
     inStock: boolean("in_stock").default(true),
     sourceUrl: text("source_url"),
+    unitSize: real("unit_size"),   // parsed numeric size (e.g. 500 for "500ml", 4260 for "12x355ml")
+    unitType: text("unit_type"),   // canonical unit: g, ml, oz, fl_oz, ea
     rawData: text("raw_data"), // JSON blob
     createdAt: timestamp("created_at")
       .notNull()

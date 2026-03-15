@@ -3,6 +3,7 @@ import { storeProducts, priceHistory, stores } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import type { StoreAdapter, RawProduct } from "./types";
 import { normalizeUpc } from "../utils/upc";
+import { parseSize } from "../utils/unit-price";
 
 export async function runIngestion(adapter: StoreAdapter) {
   const storeId = adapter.storeId;
@@ -20,6 +21,7 @@ export async function runIngestion(adapter: StoreAdapter) {
     try {
       // Normalize UPC to 12-digit UPC-A / 13-digit EAN-13 for barcode scanner compatibility
       const normalizedUpc = normalizeUpc(product.upc);
+      const parsedSize = parseSize(product.size, product.name);
 
       // Upsert store_product
       const existing = await db
@@ -45,6 +47,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             salePrice: product.salePrice,
             unit: product.unit,
             size: product.size,
+            unitSize: parsedSize?.size ?? existing[0].unitSize,
+            unitType: parsedSize?.unit ?? existing[0].unitType,
             categoryRaw: product.categoryRaw,
             imageUrl: product.imageUrl,
             inStock: product.inStock ?? true,
@@ -77,6 +81,8 @@ export async function runIngestion(adapter: StoreAdapter) {
             salePrice: product.salePrice,
             unit: product.unit,
             size: product.size,
+            unitSize: parsedSize?.size ?? null,
+            unitType: parsedSize?.unit ?? null,
             categoryRaw: product.categoryRaw,
             imageUrl: product.imageUrl,
             inStock: product.inStock ?? true,

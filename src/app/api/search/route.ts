@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rawSql } from "@/lib/db";
 import { getPriceChanges } from "@/lib/db/price-changes";
 import { normalizeUpc } from "@/lib/utils/upc";
+import { formatUnitPrice } from "@/lib/utils/unit-price";
 
 function looksLikeBarcode(q: string): boolean {
   const digits = q.replace(/\D/g, "");
@@ -146,7 +147,11 @@ export async function GET(req: NextRequest) {
          'price', sp.price,
          'sale_price', sp.sale_price,
          'name', sp.name,
-         'updated_at', sp.updated_at
+         'updated_at', sp.updated_at,
+         'unit_size', sp.unit_size,
+         'unit_type', sp.unit_type,
+         'confidence', pm.confidence,
+         'match_method', pm.match_method
        )) AS store_prices
      FROM products p
      JOIN product_matches pm ON pm.product_id = p.id
@@ -190,6 +195,8 @@ export async function GET(req: NextRequest) {
        sp.sale_price,
        sp.updated_at,
        sp.category_raw,
+       sp.unit_size,
+       sp.unit_type,
        COALESCE(sp.sale_price, sp.price) AS min_price
      FROM store_products sp
      WHERE (sp.name ILIKE $1 OR sp.brand ILIKE $1)
@@ -221,17 +228,36 @@ export async function GET(req: NextRequest) {
       sale_price: number | null;
       name: string;
       updated_at: string | null;
+      unit_size: number | null;
+      unit_type: string | null;
+      confidence: number | null;
+      match_method: string | null;
     }>;
 
-    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null }> = {};
+    const prices: Record<string, { price: number | null; salePrice: number | null; name: string; updatedAt: string | null; unitPrice: string | null; matchQuality: string }> = {};
     const storeSpIds: Record<string, number> = {};
     for (const sp of storePricesArr) {
       if (!prices[sp.store_id]) {
+        const effectivePrice = sp.sale_price ?? sp.price;
+        const unitPriceLabel = effectivePrice != null
+          ? formatUnitPrice(effectivePrice, sp.unit_size, sp.unit_type)
+          : null;
+
+        // Determine match quality from method + confidence
+        let matchQuality = "matched";
+        if (sp.match_method === "upc") {
+          matchQuality = "upc";
+        } else if (sp.match_method === "fuzzy_name" || sp.match_method === "ai") {
+          matchQuality = (sp.confidence ?? 0) >= 0.85 ? "fuzzy_high" : "fuzzy_low";
+        }
+
         prices[sp.store_id] = {
           price: sp.price,
           salePrice: sp.sale_price,
           name: sp.name,
           updatedAt: sp.updated_at ?? null,
+          unitPrice: unitPriceLabel,
+          matchQuality,
         };
         allSpIds.push(sp.sp_id);
         storeSpIds[sp.store_id] = sp.sp_id;
@@ -259,6 +285,11 @@ export async function GET(req: NextRequest) {
     const storeId = String(sp.store_id);
     allSpIds.push(spId);
 
+    const effectivePrice = sp.sale_price != null ? Number(sp.sale_price) : (sp.price != null ? Number(sp.price) : null);
+    const unitPriceLabel = effectivePrice != null
+      ? formatUnitPrice(effectivePrice, sp.unit_size as number | null, sp.unit_type as string | null)
+      : null;
+
     resultSpIds.push({ [storeId]: spId });
     results.push({
       id: -spId,
@@ -275,6 +306,8 @@ export async function GET(req: NextRequest) {
           salePrice: sp.sale_price != null ? Number(sp.sale_price) : null,
           name: String(sp.name),
           updatedAt: sp.updated_at ? String(sp.updated_at) : null,
+          unitPrice: unitPriceLabel,
+          matchQuality: "unmatched",
         },
       },
       priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,

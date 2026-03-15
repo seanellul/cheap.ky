@@ -60,6 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${store.fullName} Prices & Comparison`,
     description: `Compare ${store.fullName} prices against ${otherStores}. See where ${store.name} is cheapest in the Cayman Islands. Updated daily.`,
+    alternates: { canonical: `https://cheap.ky/store/${id}` },
     openGraph: {
       title: `${store.fullName} Prices -- Cheap.ky`,
       description: `Compare ${store.fullName} grocery prices against other Cayman Islands stores.`,

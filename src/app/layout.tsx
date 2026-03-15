@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/icons/apple-touch-icon.png",
   },
-  metadataBase: new URL("https://www.cheap.ky"),
+  metadataBase: new URL("https://cheap.ky"),
   openGraph: {
     type: "website",
     locale: "en_KY",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
       "Save up to 75% across 35k Cayman grocery products. Don't just shop, be Cheap.ky",
   },
   alternates: {
-    canonical: "https://www.cheap.ky",
+    canonical: "https://cheap.ky",
   },
   appleWebApp: {
     capable: true,

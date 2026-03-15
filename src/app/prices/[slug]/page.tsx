@@ -11,7 +11,7 @@ import {
 } from "@/lib/data/products";
 import { PriceChartWrapper } from "@/components/price-chart-wrapper";
 import { formatKYD } from "@/lib/utils/currency";
-import { productToSlug } from "@/lib/utils/slug";
+import { productToSlug, toSlug } from "@/lib/utils/slug";
 import { ChevronRight, ExternalLink, TrendingDown, Tag, Store, BarChart3 } from "lucide-react";
 import { ProductRating } from "@/components/product-rating";
 
@@ -68,7 +68,14 @@ export async function generateMetadata({
     }
   }
 
-  const title = `${product.canonical_name} Price in Cayman Islands`;
+  const brandPrefix = product.brand && !product.canonical_name.toLowerCase().includes(product.brand.toLowerCase())
+    ? product.brand
+    : null;
+  const sizeSuffix = product.size && !product.canonical_name.toLowerCase().includes(product.size.toLowerCase())
+    ? product.size
+    : null;
+  const richName = [brandPrefix, product.canonical_name, sizeSuffix].filter(Boolean).join(" ");
+  const title = `${richName} Price in Cayman Islands`;
   const description =
     storePrices.length > 0
       ? `Compare ${product.canonical_name} prices across ${storePrices.length} Cayman store${storePrices.length === 1 ? "" : "s"}. Currently cheapest at ${cheapestStore} (${formatKYD(cheapestPrice)}). Updated daily.`
@@ -77,6 +84,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: { canonical: `https://cheap.ky/prices/${slug}` },
     openGraph: {
       title: `${product.canonical_name} -- Best Price in Cayman`,
       description,
@@ -185,7 +193,7 @@ export default async function ProductPricePage({ params }: PageProps) {
               "@type": "ListItem",
               position: 3,
               name: topCategory,
-              item: `https://cheap.ky/prices?category=${encodeURIComponent(topCategory)}`,
+              item: `https://cheap.ky/category/${toSlug(topCategory)}`,
             },
             { "@type": "ListItem", position: 4, name: product.canonical_name },
           ]
@@ -218,7 +226,7 @@ export default async function ProductPricePage({ params }: PageProps) {
             <>
               <ChevronRight className="h-3.5 w-3.5" />
               <Link
-                href={`/prices?category=${encodeURIComponent(topCategory)}`}
+                href={`/category/${toSlug(topCategory)}`}
                 className="hover:text-primary transition-colors"
               >
                 {topCategory}

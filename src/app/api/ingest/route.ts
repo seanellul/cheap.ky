@@ -4,6 +4,7 @@ import { FostersAdapter } from "@/lib/ingest/adapters/fosters";
 import { CostULessAdapter } from "@/lib/ingest/adapters/costuless";
 import { KirkMarketAdapter } from "@/lib/ingest/adapters/kirkmarket";
 import { HurleysAdapter } from "@/lib/ingest/adapters/hurleys";
+import { PricedRightAdapter } from "@/lib/ingest/adapters/pricedright";
 import { runMatchingPipeline } from "@/lib/ingest/matching";
 import { db } from "@/lib/db";
 import { stores, storeProducts } from "@/lib/db/schema";
@@ -15,6 +16,7 @@ const adapters: Record<string, () => StoreAdapter> = {
   costuless: () => new CostULessAdapter(),
   kirkmarket: () => new KirkMarketAdapter(),
   hurleys: () => new HurleysAdapter(),
+  pricedright: () => new PricedRightAdapter(),
 };
 
 export async function GET() {

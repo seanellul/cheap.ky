@@ -195,6 +195,18 @@ export default function RootLayout({
           <PWAInstallPrompt />
           <BottomNav />
           <Toaster />
+          <footer className="py-4 text-center">
+            <p className="text-xs text-muted-foreground" style={{ fontSize: '12px' }}>
+              Built by{" "}
+              <a href="https://seanellul.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                Sean Ellul
+              </a>
+              {" · "}
+              <a href="https://seanellul.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                seanellul.com
+              </a>
+            </p>
+          </footer>
           <OnboardingOverlay />
         </FavouritesProvider>
         </CartProvider>

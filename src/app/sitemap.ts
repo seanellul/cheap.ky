@@ -29,10 +29,12 @@ export async function generateSitemaps() {
 }
 
 export default async function sitemap({
-  id,
+  id: rawId,
 }: {
   id: number;
 }): Promise<MetadataRoute.Sitemap> {
+  const id = Number(rawId);
+
   // ── Segment 0: static, store, category, guide, blog pages ──────────
   if (id === 0) {
     const staticPages: MetadataRoute.Sitemap = [
@@ -98,6 +100,8 @@ export default async function sitemap({
   // ── Segments 1..N: product pages ───────────────────────────────────
   const segmentIndex = id - 1;
   const offset = segmentIndex * PRODUCTS_PER_SEGMENT;
+
+  if (Number.isNaN(offset) || offset < 0) return [];
 
   const products = await rawSql(
     `SELECT p.id, p.canonical_name, MAX(sp.updated_at) as last_updated

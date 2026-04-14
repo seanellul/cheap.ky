@@ -8,7 +8,7 @@ import { PricedRightAdapter } from "@/lib/ingest/adapters/pricedright";
 import { runMatchingPipeline } from "@/lib/ingest/matching";
 import type { StoreAdapter } from "@/lib/ingest/types";
 
-export const maxDuration = 300;
+export const maxDuration = 900;
 
 // Rotate through stores — one per invocation.
 // With an hourly cron (0–23), each store is hit ~4× per day.

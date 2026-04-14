@@ -195,15 +195,27 @@ export default function RootLayout({
           <PWAInstallPrompt />
           <BottomNav />
           <Toaster />
-          <footer className="py-4 text-center">
-            <p className="text-xs text-muted-foreground" style={{ fontSize: '12px' }}>
+          <footer className="border-t border-foreground/5 py-4 text-center">
+            <p className="text-xs text-muted-foreground/60" style={{ fontSize: '11px' }}>
               Built by{" "}
-              <a href="https://seanellul.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+              <a href="https://seanellul.com" target="_blank" rel="noopener noreferrer" className="underline decoration-muted-foreground/30 hover:decoration-muted-foreground/60 transition-all">
                 Sean Ellul
               </a>
-              {" · "}
-              <a href="https://seanellul.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                seanellul.com
+              <span className="mx-2 opacity-40">·</span>
+              <a href="https://careers.ky" target="_blank" rel="noopener noreferrer" className="underline decoration-muted-foreground/30 hover:decoration-muted-foreground/60 transition-all">
+                Careers.ky
+              </a>
+              <span className="mx-1.5 opacity-30">|</span>
+              <a href="https://legislation.ky" target="_blank" rel="noopener noreferrer" className="underline decoration-muted-foreground/30 hover:decoration-muted-foreground/60 transition-all">
+                Legislation.ky
+              </a>
+              <span className="mx-1.5 opacity-30">|</span>
+              <a href="https://constitution.ky" target="_blank" rel="noopener noreferrer" className="underline decoration-muted-foreground/30 hover:decoration-muted-foreground/60 transition-all">
+                Constitution.ky
+              </a>
+              <span className="mx-1.5 opacity-30">|</span>
+              <a href="https://caybooks.com" target="_blank" rel="noopener noreferrer" className="underline decoration-muted-foreground/30 hover:decoration-muted-foreground/60 transition-all">
+                CayBooks
               </a>
             </p>
           </footer>

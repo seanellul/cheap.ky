@@ -94,10 +94,10 @@ export async function generateMetadata({
 }
 
 // ── Static params ─────────────────────────────────────────────────────
-
+// Return empty array so pages are generated on-demand via ISR (revalidate = 3600)
+// instead of building all 41k+ pages at deploy time.
 export async function generateStaticParams() {
-  const slugs = await getProductSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 // ── Page ───────────────────────────────────────────────────────────────

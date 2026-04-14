@@ -5,7 +5,7 @@ import { Search, Loader2, ArrowUpDown, ScanBarcode, Filter, Store, Clock, Tag, X
 import { Input } from "@/components/ui/input";
 import { addSearchEntry, getSearchHistory } from "@/lib/history";
 import { ScannerErrorBoundary } from "@/components/scanner-error-boundary";
-import { STORE_META } from "@/lib/data/stores";
+import { STORE_META } from "@/lib/data/store-meta";
 
 const BarcodeScanner = lazy(() =>
   import("@/components/barcode-scanner").then((m) => ({ default: m.BarcodeScanner }))

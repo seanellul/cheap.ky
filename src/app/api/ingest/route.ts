@@ -11,7 +11,7 @@ import { stores, storeProducts } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import type { StoreAdapter } from "@/lib/ingest/types";
 
-export const maxDuration = 900;
+export const maxDuration = 800;
 
 const adapters: Record<string, () => StoreAdapter> = {
   fosters: () => new FostersAdapter(),

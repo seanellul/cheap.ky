@@ -1,5 +1,6 @@
 import { rawSql } from "@/lib/db";
 import { productToSlug } from "@/lib/utils/slug";
+import { STORE_META } from "./store-meta";
 export { STORE_META } from "./store-meta";
 
 export interface StoreStats {

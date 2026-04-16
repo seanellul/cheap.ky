@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { rawSql } from "@/lib/db";
 
 /** Postgres returns bigint/numeric as strings — coerce to JS numbers */
@@ -40,8 +41,15 @@ const MATCHED_CTE = `
   )
 `;
 
-export async function GET() {
-  try {
+const getReportData = unstable_cache(
+  async () => {
+    return await _fetchReportData();
+  },
+  ["report-data"],
+  { revalidate: 10800 } // 3 hours
+);
+
+async function _fetchReportData() {
   // 1. Overall stats
   const [overview] = await rawSql(`
     WITH ${MATCHED_CTE}
@@ -243,7 +251,7 @@ export async function GET() {
   }
   const totalProducts = Number(priceIndex.total_products);
 
-  return NextResponse.json(numify({
+  return numify({
     overview,
     winRates,
     distribution,
@@ -256,7 +264,15 @@ export async function GET() {
     purchasingPower,
     storeIndex,
     totalProducts,
-  }));
+  });
+}
+
+export async function GET() {
+  try {
+    const data = await getReportData();
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "public, s-maxage=10800, stale-while-revalidate=86400" },
+    });
   } catch (e: unknown) {
     console.error("[report] Error:", e);
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

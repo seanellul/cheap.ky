@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { rawSql } from "@/lib/db";
 import { getPriceChanges } from "@/lib/db/price-changes";
 import { normalizeUpc } from "@/lib/utils/upc";
@@ -15,10 +16,15 @@ function simplifyCategory(raw: string): string {
   return parts.length > 2 ? parts.slice(2).join(" / ") : parts[parts.length - 1];
 }
 
+const getAllCategoryRaws = unstable_cache(
+  async () =>
+    rawSql(`SELECT DISTINCT category_raw FROM store_products WHERE category_raw IS NOT NULL`),
+  ["all-category-raws"],
+  { revalidate: 3600 }
+);
+
 async function resolveCategoryRaws(slug: string): Promise<string[]> {
-  const allCats = await rawSql(
-    `SELECT DISTINCT category_raw FROM store_products WHERE category_raw IS NOT NULL`
-  );
+  const allCats = await getAllCategoryRaws();
   return allCats
     .filter((c) => toSlug(simplifyCategory(String(c.category_raw))) === slug)
     .map((c) => String(c.category_raw));

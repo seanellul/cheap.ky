@@ -1,34 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { staples, stapleProducts, storeProducts } from "@/lib/db/schema";
-import { eq, and, ilike, isNotNull, or } from "drizzle-orm";
+import { eq, and, ilike, isNotNull, inArray } from "drizzle-orm";
 import { getPriceChanges } from "@/lib/db/price-changes";
 
 export async function GET() {
   const allStaples = await db.select().from(staples).orderBy(staples.sortOrder);
 
-  const result = [];
-  const allSpIds: number[] = [];
-  // Track which spId belongs to which result index + storeId
-  const spIdMapping: Array<{ resultIdx: number; storeId: string; spId: number }> = [];
+  if (allStaples.length === 0) {
+    return NextResponse.json({ staples: [] });
+  }
 
-  for (const staple of allStaples) {
-    const links = await db
-      .select({
-        storeId: stapleProducts.storeId,
-        autoMatched: stapleProducts.autoMatched,
-        productId: storeProducts.id,
-        productName: storeProducts.name,
-        price: storeProducts.price,
-        salePrice: storeProducts.salePrice,
-        size: storeProducts.size,
-        imageUrl: storeProducts.imageUrl,
-        updatedAt: storeProducts.updatedAt,
-      })
-      .from(stapleProducts)
-      .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
-      .where(eq(stapleProducts.stapleId, staple.id));
+  // Single query for all staple-product links instead of N per-staple queries
+  const allLinks = await db
+    .select({
+      stapleId: stapleProducts.stapleId,
+      storeId: stapleProducts.storeId,
+      autoMatched: stapleProducts.autoMatched,
+      productId: storeProducts.id,
+      productName: storeProducts.name,
+      price: storeProducts.price,
+      salePrice: storeProducts.salePrice,
+      size: storeProducts.size,
+      imageUrl: storeProducts.imageUrl,
+      updatedAt: storeProducts.updatedAt,
+    })
+    .from(stapleProducts)
+    .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
+    .where(inArray(stapleProducts.stapleId, allStaples.map((s) => s.id)));
 
+  // Group links by stapleId
+  const linksByStaple = new Map<number, typeof allLinks>();
+  for (const link of allLinks) {
+    const existing = linksByStaple.get(link.stapleId) ?? [];
+    existing.push(link);
+    linksByStaple.set(link.stapleId, existing);
+  }
+
+  const allSpIds: number[] = allLinks.map((l) => l.productId);
+  const priceChangeMap = await getPriceChanges(allSpIds);
+
+  const result = allStaples.map((staple) => {
+    const links = linksByStaple.get(staple.id) ?? [];
     const prices: Record<
       string,
       {
@@ -42,8 +55,8 @@ export async function GET() {
         updatedAt: string | null;
       }
     > = {};
+    const priceChanges: Record<string, { direction: "up" | "down"; amount: number }> = {};
 
-    const resultIdx = result.length;
     for (const link of links) {
       prices[link.storeId] = {
         productId: link.productId,
@@ -55,27 +68,12 @@ export async function GET() {
         autoMatched: link.autoMatched,
         updatedAt: link.updatedAt ? link.updatedAt.toISOString() : null,
       };
-      allSpIds.push(link.productId);
-      spIdMapping.push({ resultIdx, storeId: link.storeId, spId: link.productId });
+      const change = priceChangeMap.get(link.productId);
+      if (change) priceChanges[link.storeId] = change;
     }
 
-    result.push({
-      id: staple.id,
-      name: staple.name,
-      category: staple.category,
-      prices,
-      priceChanges: {} as Record<string, { direction: "up" | "down"; amount: number }>,
-    });
-  }
-
-  // Batch fetch price changes
-  const priceChangeMap = await getPriceChanges(allSpIds);
-  for (const { resultIdx, storeId, spId } of spIdMapping) {
-    const change = priceChangeMap.get(spId);
-    if (change) {
-      result[resultIdx].priceChanges[storeId] = change;
-    }
-  }
+    return { id: staple.id, name: staple.name, category: staple.category, prices, priceChanges };
+  });
 
   return NextResponse.json({ staples: result });
 }

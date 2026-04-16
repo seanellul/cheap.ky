@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { smartCartItems, staples, stapleProducts, storeProducts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export async function GET() {
   const items = await db
@@ -9,41 +9,52 @@ export async function GET() {
     .from(smartCartItems)
     .innerJoin(staples, eq(smartCartItems.stapleId, staples.id));
 
-  const result = [];
+  if (items.length === 0) {
+    return NextResponse.json({ items: [] });
+  }
 
-  for (const item of items) {
-    // Get linked products for this staple
-    const links = await db
-      .select({
-        storeId: stapleProducts.storeId,
-        productName: storeProducts.name,
-        price: storeProducts.price,
-        salePrice: storeProducts.salePrice,
-        size: storeProducts.size,
-        imageUrl: storeProducts.imageUrl,
-      })
-      .from(stapleProducts)
-      .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
-      .where(eq(stapleProducts.stapleId, item.staples.id));
+  // Single query for all staple-product links instead of N per-item queries
+  const stapleIds = items.map((item) => item.staples.id);
+  const allLinks = await db
+    .select({
+      stapleId: stapleProducts.stapleId,
+      storeId: stapleProducts.storeId,
+      productName: storeProducts.name,
+      price: storeProducts.price,
+      salePrice: storeProducts.salePrice,
+      size: storeProducts.size,
+      imageUrl: storeProducts.imageUrl,
+    })
+    .from(stapleProducts)
+    .innerJoin(storeProducts, eq(stapleProducts.storeProductId, storeProducts.id))
+    .where(inArray(stapleProducts.stapleId, stapleIds));
 
+  // Group links by stapleId
+  const linksByStaple = new Map<number, typeof allLinks>();
+  for (const link of allLinks) {
+    const existing = linksByStaple.get(link.stapleId) ?? [];
+    existing.push(link);
+    linksByStaple.set(link.stapleId, existing);
+  }
+
+  const result = items.map((item) => {
+    const links = linksByStaple.get(item.staples.id) ?? [];
     const prices: Record<string, { price: number | null; productName: string }> = {};
     for (const link of links) {
-      const effectivePrice = link.salePrice ?? link.price;
       prices[link.storeId] = {
-        price: effectivePrice,
+        price: link.salePrice ?? link.price,
         productName: link.productName,
       };
     }
-
-    result.push({
+    return {
       cartItemId: item.smart_cart_items.id,
       stapleId: item.staples.id,
       name: item.staples.name,
       category: item.staples.category,
       quantity: item.smart_cart_items.quantity,
       prices,
-    });
-  }
+    };
+  });
 
   return NextResponse.json({ items: result });
 }
@@ -51,7 +62,6 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { stapleId, quantity = 1 } = await req.json();
 
-  // Check if already in cart
   const existing = await db
     .select()
     .from(smartCartItems)

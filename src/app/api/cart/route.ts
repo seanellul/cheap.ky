@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cartItems, products, productMatches, storeProducts, stores } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export async function GET() {
   const items = await db
@@ -9,25 +9,38 @@ export async function GET() {
     .from(cartItems)
     .innerJoin(products, eq(cartItems.productId, products.id));
 
-  const result = [];
+  if (items.length === 0) {
+    return NextResponse.json({ items: [] });
+  }
 
-  for (const item of items) {
-    const matches = await db
-      .select({
-        storeProduct: storeProducts,
-        store: stores,
-      })
-      .from(productMatches)
-      .innerJoin(storeProducts, eq(productMatches.storeProductId, storeProducts.id))
-      .innerJoin(stores, eq(storeProducts.storeId, stores.id))
-      .where(eq(productMatches.productId, item.products.id));
+  // Single query for all product matches instead of N per-item queries
+  const productIds = items.map((item) => item.products.id);
+  const allMatches = await db
+    .select({
+      productId: productMatches.productId,
+      storeProduct: storeProducts,
+      store: stores,
+    })
+    .from(productMatches)
+    .innerJoin(storeProducts, eq(productMatches.storeProductId, storeProducts.id))
+    .innerJoin(stores, eq(storeProducts.storeId, stores.id))
+    .where(inArray(productMatches.productId, productIds));
 
+  // Group matches by productId
+  const matchesByProduct = new Map<number, typeof allMatches>();
+  for (const m of allMatches) {
+    const existing = matchesByProduct.get(m.productId) ?? [];
+    existing.push(m);
+    matchesByProduct.set(m.productId, existing);
+  }
+
+  const result = items.map((item) => {
+    const matches = matchesByProduct.get(item.products.id) ?? [];
     const prices: Record<string, number | null> = {};
     for (const m of matches) {
       prices[m.store.id] = m.storeProduct.salePrice ?? m.storeProduct.price;
     }
-
-    result.push({
+    return {
       cartItemId: item.cart_items.id,
       productId: item.products.id,
       name: item.products.canonicalName,
@@ -38,8 +51,8 @@ export async function GET() {
       preferredStoreId: item.cart_items.preferredStoreId,
       notes: item.cart_items.notes,
       prices,
-    });
-  }
+    };
+  });
 
   return NextResponse.json({ items: result });
 }
@@ -48,7 +61,6 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { productId, quantity = 1 } = body;
 
-  // Check if already in cart
   const existing = await db
     .select()
     .from(cartItems)

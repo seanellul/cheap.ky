@@ -11,7 +11,7 @@ import type { StoreAdapter } from "@/lib/ingest/types";
 export const maxDuration = 800;
 
 // Rotate through stores — one per invocation.
-// With an hourly cron (0–23), each store is hit ~4× per day.
+// Cron runs every 3 days (0 6 */3 * *) so we rotate by day-of-year to ensure every store is hit.
 const STORE_ROTATION: Array<{ name: string; create: () => StoreAdapter }> = [
   { name: "fosters", create: () => new FostersAdapter() },
   { name: "hurleys", create: () => new HurleysAdapter() },
@@ -19,6 +19,11 @@ const STORE_ROTATION: Array<{ name: string; create: () => StoreAdapter }> = [
   { name: "pricedright", create: () => new PricedRightAdapter() },
   { name: "kirkmarket", create: () => new KirkMarketAdapter() },
 ];
+
+function dayOfYear(d: Date): number {
+  const start = Date.UTC(d.getUTCFullYear(), 0, 1);
+  return Math.floor((d.getTime() - start) / 86_400_000);
+}
 
 export async function GET(request: Request) {
   // Auth check
@@ -29,12 +34,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Pick store based on current UTC hour mod store count
-  const hour = new Date().getUTCHours();
-  const storeIndex = hour % STORE_ROTATION.length;
+  // Pick store based on UTC day-of-year mod store count
+  const now = new Date();
+  const day = dayOfYear(now);
+  const storeIndex = day % STORE_ROTATION.length;
   const adapter = STORE_ROTATION[storeIndex];
 
-  console.log(`[rolling-ingest] Hour ${hour} → ingesting ${adapter.name} (index ${storeIndex})`);
+  console.log(`[rolling-ingest] Day ${day} → ingesting ${adapter.name} (index ${storeIndex})`);
 
   const results: Record<string, { ok: boolean; upserted?: number; priceRecords?: number; error?: string }> = {};
 
@@ -59,7 +65,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       store: adapter.name,
-      hour,
+      day,
       results,
       timestamp: new Date().toISOString(),
     },

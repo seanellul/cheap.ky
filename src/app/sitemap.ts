@@ -118,7 +118,7 @@ export default async function sitemap({
   return products.map((p) => ({
     url: `${BASE_URL}/prices/${productToSlug(String(p.canonical_name), Number(p.id))}`,
     lastModified: p.last_updated ? new Date(String(p.last_updated)) : undefined,
-    changeFrequency: "daily" as const,
+    changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
 }
